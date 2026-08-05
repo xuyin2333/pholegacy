@@ -1,8 +1,8 @@
 /*
 --------------------------------------------------------------------------------
 
-  Photon Shader by SixthSurge
-  Modified by xuyin2333
+  Pholegacy by xuyin
+  Modified from Photon Shader, original author SixthSurge
 
   program/c5_c10_bloom_downsample
   Progressively downsample bloom tiles
@@ -29,11 +29,11 @@ const float tile_scale = bloom_tile_scale(BLOOM_TILE_INDEX);
 const vec2 tile_offset = bloom_tile_offset(BLOOM_TILE_INDEX);
 
 #if BLOOM_TILE_INDEX == 0
-// Initial tile reads TAA output directly
+// Initial tile reads the current-frame bloom input from c4_taa_exposure.
 const float src_tile_scale = 1.0;
 const vec2 src_tile_offset = vec2(0.0);
-uniform sampler2D colortex5;
-#define SRC_SAMPLER colortex5
+uniform sampler2D colortex0;
+#define SRC_SAMPLER colortex0
 #else
 // Subsequent tiles read from colortex0
 const float src_tile_scale = bloom_tile_scale(BLOOM_TILE_INDEX - 1);

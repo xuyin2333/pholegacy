@@ -1,8 +1,8 @@
 /*
 --------------------------------------------------------------------------------
 
-  Photon Shader by SixthSurge
-  Modified by xuyin2333
+  Pholegacy by xuyin
+  Modified from Photon Shader, original author SixthSurge
 
   program/d1_clouds:
   Render clouds and aurora

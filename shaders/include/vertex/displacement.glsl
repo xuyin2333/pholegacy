@@ -43,8 +43,7 @@ float gerstner_wave(
 
     float x = w * t - k * (dot(wave_dir, coord) + noise);
 
-    // Spring-inspired exponential waveform: sharp crests, flat troughs
-    return exp(sin(x) - 1.0);
+    return sqr(sin(x) * 0.5 + 0.5);
 }
 
 float get_water_displacement(vec3 world_pos, float skylight) {
@@ -64,6 +63,8 @@ float get_water_displacement(vec3 world_pos, float skylight) {
     wave = (wave * 0.05 - 0.025) * (skylight * 0.9 + 0.1);
 
 #ifdef LOD_MOD_ACTIVE
+    // Attenuate displacement towards the edge of the render distance, to
+    // prevent seam between vanilla and LoD terrain
     float fade = cubic_length(world_pos.xz - cameraPosition.xz) / far;
 
     wave *= exp2(-8.0 * cube(fade));

@@ -8,7 +8,7 @@ uniform float moon_phase_brightness;
 
 // Magic brightness adjustment so that auto exposure isn't needed
 float get_sun_exposure() {
-    const float base_scale = 8.5 * SUN_I;
+    const float base_scale = 7.0 * SUN_I;
 
     float blue_hour
         = linear_step(0.05, 1.0, exp(-190.0 * sqr(sun_dir.y + 0.09604)));
@@ -23,15 +23,17 @@ vec3 get_sun_tint() {
     float blue_hour
         = linear_step(0.05, 1.0, exp(-190.0 * sqr(sun_dir.y + 0.09604)));
 
-    vec3 morning_evening_tint = vec3(1.03, 0.92, 0.96);
+    vec3 morning_evening_tint = vec3(1.05, 0.84, 0.93) * 1.2;
     morning_evening_tint = mix(
         vec3(1.0),
         morning_evening_tint,
         sqr(pulse(sun_dir.y, 0.17, 0.40))
     );
 
-    vec3 blue_hour_tint = vec3(0.98, 0.90, 1.0);
+    vec3 blue_hour_tint = vec3(0.95, 0.80, 1.0);
     blue_hour_tint = mix(vec3(1.0), blue_hour_tint, blue_hour);
+
+    // User tint
 
     const vec3 tint_morning = from_srgb(vec3(SUN_MR, SUN_MG, SUN_MB));
     const vec3 tint_noon = from_srgb(vec3(SUN_NR, SUN_NG, SUN_NB));
@@ -70,6 +72,11 @@ vec3 get_light_color() {
         rcp(0.02) * light_dir.y
     ); // fade away during day/night transition
     light_color *= 1.0 - 0.25 * pulse(abs(light_dir.y), 0.15, 0.11);
+
+    // Rain color shift: desaturate toward gray-blue
+    const vec3 rain_tint = vec3(0.98, 0.98, 1.0);
+    float lum = dot(light_color, luminance_weights);
+    light_color = mix(light_color, vec3(lum) * rain_tint, rainStrength * 0.75);
 
     return light_color;
 }

@@ -1,7 +1,8 @@
 /*
 --------------------------------------------------------------------------------
 
-  Photon Shader by SixthSurge
+  Pholegacy by xuyin
+  Modified from Photon Shader, original author SixthSurge
 
   program/lpv/floodfill.csh:
   Perform floodfill iteration

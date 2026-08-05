@@ -1,8 +1,8 @@
 /*
 --------------------------------------------------------------------------------
 
-  Photon Shader by SixthSurge
-  Modified by xuyin2333
+  Pholegacy by xuyin
+  Modified from Photon Shader, original author SixthSurge
 
   program/d0_sky_map:
   Render omnidirectional sky map for reflections and SH lighting
@@ -55,6 +55,8 @@ uniform sampler2D colortex13;
 uniform sampler3D depthtex0; // atmospheric scattering LUT
 uniform sampler2D depthtex1;
 
+uniform sampler2D depthtex2; // minecraft cloud texture (for blocky clouds)
+
 uniform sampler2D colortex8; // cloud shadow map
 
 uniform sampler2D noisetex;
@@ -85,6 +87,7 @@ uniform float frameTimeCounter;
 uniform int isEyeInWater;
 uniform float eyeAltitude;
 uniform float rainStrength;
+uniform float wetness;
 uniform float blindness;
 uniform float darknessFactor;
 
@@ -105,14 +108,14 @@ uniform float time_sunset;
 uniform float time_midnight;
 
 uniform float biome_cave;
-uniform float biome_may_snow;
-uniform float biome_may_rain;
-uniform float biome_snowy;
 uniform float biome_temperate;
 uniform float biome_arid;
+uniform float biome_snowy;
 uniform float biome_taiga;
 uniform float biome_jungle;
 uniform float biome_swamp;
+uniform float biome_may_rain;
+uniform float biome_may_snow;
 uniform float biome_temperature;
 uniform float biome_humidity;
 
@@ -130,6 +133,7 @@ uniform float biome_humidity;
 #if defined WORLD_OVERWORLD
 #include "/include/fog/overworld/analytic.glsl"
 #include "/include/sky/aurora.glsl"
+#include "/include/sky/blocky_clouds.glsl"
 #endif
 
 #include "/include/sky/projection.glsl"
@@ -154,7 +158,33 @@ void main() {
 
         sky_map = draw_sky(ray_dir);
 
+        // Rain weather sky transition: blend sky color toward gray-white
+        // when raining, so the skybox naturally matches the rainy atmosphere
+        sky_map = mix(sky_map, vec3(0.75, 0.75, 0.80), wetness * 0.70);
+
 #if defined WORLD_OVERWORLD
+        // Render blocky clouds into the sky map so that SH sky light accounts for them
+        // (same approach as volumetric clouds — they are rendered in draw_sky() above)
+    #ifdef BLOCKY_CLOUDS
+        vec3 world_start_pos = gbufferModelViewInverse[3].xyz + cameraPosition;
+        vec3 world_end_pos = world_start_pos + ray_dir * 1e5;
+
+        float dither = texelFetch(noisetex, texel & 511, 0).b;
+        dither = r1(frameCounter, dither);
+
+        vec4 blocky_clouds = raymarch_blocky_clouds(
+            world_start_pos,
+            world_end_pos,
+            true,
+            blocky_clouds_altitude_l0,
+            dither,
+            sky_map
+        );
+
+        // Composite blocky clouds on top of sky
+        sky_map = sky_map * blocky_clouds.w + blocky_clouds.xyz;
+    #endif
+
         // Apply analytic fog over sky
         mat2x3 fog = air_fog_analytic(
             cameraPosition,

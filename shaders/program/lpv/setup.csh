@@ -1,7 +1,8 @@
 /*
 --------------------------------------------------------------------------------
 
-  Photon Shader by SixthSurge
+  Pholegacy by xuyin
+  Modified from Photon Shader, original author SixthSurge
 
   program/lpv/setup.csh:
   Store light colors and tint colors in SSBO
@@ -11,7 +12,7 @@
 
 #include "/include/global.glsl"
 
-layout(local_size_x = 32) in;
+layout(local_size_x = 48) in;
 const ivec3 workGroups = ivec3(1, 1, 1);
 
 writeonly uniform image2D light_data_img;
@@ -24,7 +25,7 @@ void main() {
     imageStore(
         light_data_img,
         ivec2(index, 0),
-        vec4(light_color[clamp(index, 0u, 31u)], 0.0)
+        vec4(light_color[clamp(index, 0u, 47u)], 0.0)
     );
     imageStore(
         light_data_img,

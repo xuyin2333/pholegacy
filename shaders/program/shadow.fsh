@@ -1,8 +1,8 @@
 /*
 --------------------------------------------------------------------------------
 
-  Photon Shader by SixthSurge
-  Modified by xuyin2333
+  Pholegacy by xuyin
+  Modified from Photon Shader, original author SixthSurge
 
   program/shadow:
   Render shadow map
@@ -12,7 +12,7 @@
 
 #include "/include/global.glsl"
 
-#ifdef COLORWHEEL
+#if defined COLORWHEEL
 layout(location = 0) out vec4 shadowcolor0_out;
 #else
 layout(location = 0) out vec3 shadowcolor0_out;
@@ -157,13 +157,12 @@ void main() {
         vec3 biome_water_color = srgb_eotf_inv(tint) * rec709_to_working_color;
         vec3 absorption_coeff = biome_water_coeff(biome_water_color);
 
-        vec3 water_color = clamp(
+        shadowcolor0_out = clamp(
             0.25 * exp(-absorption_coeff * distance_through_water)
                 * get_water_caustics(),
             rcp(255.0) /* 0 is reserved */,
             1.0
         );
-        shadowcolor0_out = water_color;
 #endif
     } else {
         vec4 base_color = textureLod(tex, uv, 0);
@@ -171,11 +170,10 @@ void main() {
             discard;
         }
 
-        vec3 shadow_color = mix(vec3(1.0), base_color.rgb * tint, base_color.a);
-        shadow_color = 0.25 * srgb_eotf_inv(shadow_color) * rec709_to_rec2020;
-        shadow_color *= step(base_color.a, 1.0 - rcp(255.0));
-
-        shadowcolor0_out = shadow_color;
+        shadowcolor0_out = mix(vec3(1.0), base_color.rgb * tint, base_color.a);
+        shadowcolor0_out
+            = 0.25 * srgb_eotf_inv(shadowcolor0_out) * rec709_to_rec2020;
+        shadowcolor0_out *= step(base_color.a, 1.0 - rcp(255.0));
     }
 #else
     vec4 base_color = textureLod(tex, uv, 0);

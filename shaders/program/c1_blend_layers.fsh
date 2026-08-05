@@ -1,8 +1,8 @@
 /*
 --------------------------------------------------------------------------------
 
-  Photon Shader by SixthSurge
-  Modified by xuyin2333
+  Pholegacy by xuyin
+  Modified from Photon Shader, original author SixthSurge
 
   program/c1_blend_layers
   Combine:
@@ -23,7 +23,7 @@ layout(location = 0) out vec3 fragment_color;
 /* RENDERTARGETS: 0 */
 
 #ifdef BLOOMY_FOG
-layout(location = 1) out float bloomy_fog;
+layout(location = 1) out vec2 bloomy_data;
 
 /* RENDERTARGETS: 0,3 */
 #endif
@@ -165,8 +165,7 @@ vec3 blend_layers_with_fog(
     bool is_translucent,
     bool is_sky,
     bool front_is_hand,
-    bool back_is_hand,
-    bool is_water
+    bool back_is_hand
 ) {
     if (back_is_hand) {
         return background_color * (1.0 - translucent_color.a)
@@ -188,12 +187,6 @@ vec3 blend_layers_with_fog(
         background_color = background_color * analytic_fog[1] + analytic_fog[0];
     }
 #endif
-
-    if (!is_water) {
-        vec3 glass_tint = translucent_color.rgb / max(translucent_color.a, 1e-10);
-        vec3 absorption = exp2(log2(max(glass_tint * 10.0, 1e-10)) * sqrt(translucent_color.a));
-        background_color *= absorption;
-    }
 
     return background_color * (1.0 - translucent_color.a)
         + translucent_color.rgb;
@@ -234,20 +227,6 @@ void main() {
 #ifdef LOD_MOD_ACTIVE
     float front_depth_lod = texelFetch(lod_depth_tex, texel, 0).x;
     float back_depth_lod = texelFetch(lod_depth_tex_solid, texel, 0).x;
-
-    // Fix Voxy translucents appearing in front of entities.
-#ifdef VOXY
-    float z_vanilla
-        = screen_to_view_space_depth(gbufferProjectionInverse, back_depth);
-    float z_lod = screen_to_view_space_depth(
-        lod_projection_matrix_inverse,
-        front_depth_lod
-    );
-    if (front_depth_lod < 1.0 && z_vanilla < z_lod
-        && front_depth == back_depth) {
-        translucent_color = vec4(0.0);
-    }
-#endif
 
     bool front_is_lod_terrain = is_lod_terrain(front_depth, front_depth_lod);
     bool back_is_lod_terrain = is_lod_terrain(back_depth, back_depth_lod);
@@ -423,16 +402,6 @@ void main() {
 
     // Blend layers
 
-#if defined VOXY
-    vec4 gbuffer_data = texelFetch(colortex16, texel, 0);
-    bool is_water = min_of(gbuffer_data) > eps;
-#elif defined DISTANT_HORIZONS
-    vec4 gbuffer_data = texelFetch(colortex1, texel, 0);
-    bool is_water = min_of(gbuffer_data) > eps;
-#else
-    bool is_water = false;
-#endif
-
     fragment_color = blend_layers_with_fog(
         fragment_color,
         translucent_color,
@@ -441,8 +410,7 @@ void main() {
         is_translucent,
         is_sky,
         front_is_hand,
-        back_is_hand,
-        is_water
+        back_is_hand
     );
 
     // Border fog
@@ -477,26 +445,12 @@ void main() {
 
     fragment_color = fragment_color * fog_transmittance + fog_scattering;
 
-    // Distance fog supplement — simple distance-based layer using sky color
-    // Only kicks in at far distances to complement volumetric fog
-#if defined WORLD_OVERWORLD
-    if (isEyeInWater == 0) {
-        float dist_fog_transmittance
-            = exp2(-0.0008 * max0(view_distance - 192.0));
-
-        // Shift fog color toward a cleaner sky tone to avoid gray/yellow haze
-        vec3 dist_fog_color = ambient_color + light_color * 0.1;
-
-        fragment_color = fragment_color * dist_fog_transmittance
-            + dist_fog_color * 0.25 * (1.0 - dist_fog_transmittance);
-        fog_transmittance *= dist_fog_transmittance;
-    }
-#endif
-
 #ifdef BLOOMY_FOG
-    bloomy_fog
-        = clamp01(dot(fog_transmittance, vec3(luminance_weights_rec2020)));
-    bloomy_fog = isEyeInWater == 1.0 ? sqrt(bloomy_fog) : bloomy_fog;
+    bloomy_data = vec2(
+        clamp01(dot(fog_transmittance, vec3(luminance_weights_rec2020))),
+        0.0
+    );
+    bloomy_data.x = isEyeInWater == 1.0 ? sqrt(bloomy_data.x) : bloomy_data.x;
 #endif
 #endif
 
@@ -521,7 +475,10 @@ void main() {
         fragment_color += analytic_fog[0];
 
 #ifdef BLOOMY_FOG
-        bloomy_fog = sqrt(clamp01(dot(analytic_fog[1], vec3(0.33))));
+        bloomy_data = vec2(
+            sqrt(clamp01(dot(analytic_fog[1], vec3(0.33)))),
+            0.0
+        );
 #endif
     } else {
 #if defined WORLD_OVERWORLD
@@ -539,13 +496,15 @@ void main() {
         fragment_color += analytic_fog[0];
 
 #ifdef BLOOMY_FOG
-        bloomy_fog
-            = clamp01(dot(fog_transmittance, vec3(luminance_weights_rec2020)));
-        bloomy_fog = isEyeInWater == 1.0 ? sqrt(bloomy_fog) : bloomy_fog;
+        bloomy_data = vec2(
+            clamp01(dot(fog_transmittance, vec3(luminance_weights_rec2020))),
+            0.0
+        );
+        bloomy_data.x = isEyeInWater == 1.0 ? sqrt(bloomy_data.x) : bloomy_data.x;
 #endif
 #else
 #ifdef BLOOMY_FOG
-        bloomy_fog = 1.0;
+        bloomy_data = vec2(1.0, 0.0);
 #endif
 #endif
     }
@@ -564,18 +523,23 @@ void main() {
         float sss_phase = henyey_greenstein_phase(VdotL, 0.2);
         fragment_color += light_color * sss_phase * 0.06 * rainStrength;
 
-#ifdef BLOOMY_FOG
+#if defined BLOOMY_RAIN && defined BLOOMY_FOG
+        // Rain bloom: stored in independent channel, unaffected by
+        // BLOOMY_FOG_INTENSITY. Applied with fixed intensity in
+        // c19_color_grading.fsh.
+        bloomy_data.y = 0.7 * rainStrength;
+#elif defined BLOOMY_FOG
         // Strongly cut fog transmittance in rain areas so bloom bleeds
         // through visibly, giving rain that soft glowing quality around
         // lightsources
-        bloomy_fog *= mix(1.0, 0.3, rainStrength);
+        bloomy_data.x *= mix(1.0, 0.3, rainStrength);
 #endif
     }
 #endif
 
 #ifdef BLOOMY_FOG
 #if defined WORLD_NETHER
-    bloomy_fog
+    bloomy_data.x
         = spherical_fog(
               view_distance,
               nether_fog_start,
@@ -583,7 +547,7 @@ void main() {
           ) * 0.33
         + 0.67;
 #elif defined WORLD_END
-    bloomy_fog = bloomy_fog * 0.5 + 0.5;
+    bloomy_data.x = bloomy_data.x * 0.5 + 0.5;
 #endif
 #endif
 }

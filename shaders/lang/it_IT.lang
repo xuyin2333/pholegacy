@@ -67,11 +67,11 @@ screen.nether_color                    = Colore Statico
 screen.distance_view                   = Distanza Visiva
 
 option.INFO                            = Pholegacy
-value.INFO.0                           = §eby xuyin2333
-value.INFO.1                           = §aby xuyin2333
-value.INFO.2                           = §bby xuyin2333
-value.INFO.3                           = §dby xuyin2333
-option.INFO.comment                    = Shader originale di §bSixthSurge§r\nModificato da: §axuyin2333
+value.INFO.0                           = §eby xuyin
+value.INFO.1                           = §aby xuyin
+value.INFO.2                           = §bby xuyin
+value.INFO.3                           = §dby xuyin
+option.INFO.comment                    = Original shader by §bSixthSurge§r, modified from Photon Shader
 
 # World settings
 
@@ -629,10 +629,16 @@ value.DOF_FOCUS.-1.0                   = Automatico
 
 option.tonemap                         = Operatore Tonemap
 
-value.tonemap.tonemap_aces_fit         = ACES Fit
-value.tonemap.tonemap_agx             = AgX
+value.tonemap.academy_fit              = Academy Fit
+value.tonemap.academy_rrt              = Academy RRT
+value.tonemap.tonemap_hejl_2015        = Hejl 2015
+value.tonemap.tonemap_hejl_burgess     = Hejl-Burgess
 value.tonemap.tonemap_lottes           = Lottes
 value.tonemap.tonemap_uncharted_2      = Uncharted 2
+value.tonemap.tonemap_tech             = Tech
+value.tonemap.tonemap_ozius            = Ozius
+value.tonemap.tonemap_reinhard         = Reinhard
+value.tonemap.tonemap_reinhard_jodie   = Reinhard-Jodie
 
 # Color Grading
 
@@ -692,13 +698,27 @@ value.DEBUG_VIEW.DEBUG_VIEW_SAMPLER    = Sampler
 value.DEBUG_VIEW.DEBUG_VIEW_HISTOGRAM  = Istogramma
 value.DEBUG_VIEW.DEBUG_VIEW_WEATHER    = Meteo
 
-value.tonemap_left.tonemap_aces_fit       = ACES Fit
+value.tonemap_left.academy_fit            = Academy Fit
+value.tonemap_left.academy_rrt            = Academy RRT
 value.tonemap_left.tonemap_lottes         = Lottes
+value.tonemap_left.tonemap_hejl_2015      = Hejl 2015
+value.tonemap_left.tonemap_hejl_burgess   = Hejl-Burgess
 value.tonemap_left.tonemap_uncharted_2    = Uncharted 2
+value.tonemap_left.tonemap_tech           = Tech
+value.tonemap_left.tonemap_ozius          = Ozius
+value.tonemap_left.tonemap_reinhard       = Reinhard
+value.tonemap_left.tonemap_reinhard_jodie = Reinhard-Jodie
 
-value.tonemap_right.tonemap_aces_fit      = ACES Fit
+value.tonemap_right.academy_fit            = Academy Fit
+value.tonemap_right.academy_rrt            = Academy RRT
 value.tonemap_right.tonemap_lottes         = Lottes
+value.tonemap_right.tonemap_hejl_burgess   = Hejl-Burgess
+value.tonemap_right.tonemap_hejl_2015      = Hejl 2015
 value.tonemap_right.tonemap_uncharted_2    = Uncharted 2
+value.tonemap_right.tonemap_tech           = Tech
+value.tonemap_right.tonemap_ozius          = Ozius
+value.tonemap_right.tonemap_reinhard       = Reinhard
+value.tonemap_right.tonemap_reinhard_jodie = Reinhard-Jodie
 
 # Distance View 
 

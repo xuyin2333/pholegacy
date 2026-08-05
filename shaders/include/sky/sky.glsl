@@ -162,7 +162,7 @@ vec3 draw_sky(
 #if defined PROGRAM_DEFERRED4
     vec3 skytextured_output
         = texelFetch(colortex0, ivec2(gl_FragCoord.xy), 0).rgb;
-    sky += skytextured_output;
+    sky += texelFetch(colortex0, ivec2(gl_FragCoord.xy), 0).rgb;
 
 #ifdef STARS
     // Stars
@@ -188,7 +188,6 @@ vec3 draw_sky(
 
     sky *= atmosphere_transmittance(ray_dir.y, planet_radius)
         * (1.0 - rainStrength);
-
 #ifdef BIOME_SKY
     vec3 biome_sky_color = get_biome_sky(ray_dir);
     atmosphere = mix(atmosphere, biome_sky_color, BIOME_SKY_INTENSITY);

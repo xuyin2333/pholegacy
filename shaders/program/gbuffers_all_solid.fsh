@@ -1,8 +1,8 @@
 /*
 --------------------------------------------------------------------------------
 
-  Photon Shader by SixthSurge
-  Modified by xuyin2333
+  Pholegacy by xuyin
+  Modified from Photon Shader, original author SixthSurge
 
   program/gbuffers_all_solid:
   Handle terrain, entities, the hand, beacon beams and spider eyes
@@ -359,11 +359,11 @@ void main() {
 
     gl_FragDepth = screen_pos.z;
 
-    vec4 base_color = vec4(ray.result_color, 1f);
+    vec4 base_color = vec4(ray.result_color, 1.0f);
     vec3 ph_normal = ray.result_normal;
 
 #if defined SPECULAR_MAPPING
-    vec4 specular_map = vec4(0f);
+    vec4 specular_map = vec4(0.0f);
 #endif
 #endif
 
@@ -405,10 +405,10 @@ void main() {
 
 #if defined PROGRAM_GBUFFERS_TERRAIN && defined VANILLA_AO
 #if SHADER_AO != SHADER_AO_NONE
-    const float vanilla_ao_strength = 0.9;
-    const float vanilla_ao_lift = 0.5;
+    const float vanilla_ao_strength = 0.9 * VANILLA_AO_INTENSITY;
+    const float vanilla_ao_lift = 0.5 * (1-((1-VANILLA_AO_INTENSITY)*0.5));
 #else
-    const float vanilla_ao_strength = 1.0;
+    const float vanilla_ao_strength = 1.0 * VANILLA_AO_INTENSITY;
     const float vanilla_ao_lift = 0.0;
 #endif
 

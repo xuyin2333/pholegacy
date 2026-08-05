@@ -199,27 +199,6 @@ vec3 blackbody(float temperature) {
     return min_of(rgb) / rgb;
 }
 
-// Planckian Locus approximation - returns sRGB color
-// http://en.wikipedia.org/wiki/Planckian_locus
-vec3 blackbody_planckian(float t) {
-    vec4 vx = vec4(-0.2661239e9, -0.2343580e6, 0.8776956e3, 0.179910);
-    vec4 vy = vec4(-1.1063814,   -1.34811020,  2.18555832, -0.20219683);
-    float it = 1.0 / t;
-    float it2 = it * it;
-    float x = dot(vx, vec4(it * it2, it2, it, 1.0));
-    float x2 = x * x;
-    float y = dot(vy, vec4(x * x2, x2, x, 1.0));
-
-    mat3 xyz_to_srgb = mat3(
-         3.2404542,-1.5371385,-0.4985314,
-        -0.9692660, 1.8760108, 0.0415560,
-         0.0556434,-0.2040259, 1.0572252
-    );
-
-    vec3 srgb = vec3(x / y, 1.0, (1.0 - x - y) / y) * xyz_to_srgb;
-    return max0(srgb);
-}
-
 // Isolate a range of hues
 float isolate_hue(vec3 hsl, float center, float width) {
     if (hsl.y < 1e-2 || hsl.z < 1e-2) {

@@ -70,11 +70,11 @@ screen.nether_color                    = Color estático
 screen.distance_view                   = Distancia de vista
 
 option.INFO                            = Pholegacy
-value.INFO.0                           = §eby xuyin2333
-value.INFO.1                           = §aby xuyin2333
-value.INFO.2                           = §bby xuyin2333
-value.INFO.3                           = §dby xuyin2333
-option.INFO.comment                    = Shader original por §bSixthSurge§r\nModificado por: §axuyin2333
+value.INFO.0                           = §epor xuyin
+value.INFO.1                           = §apor xuyin
+value.INFO.2                           = §bpor xuyin
+value.INFO.3                           = §dpor xuyin
+option.INFO.comment                    = Original shader by §bSixthSurge§r, modified from Photon Shader
 
 # World settings
 
@@ -629,9 +629,15 @@ value.DOF_FOCUS.-1.0                   = Automático
 option.tonemap                         = Operador de mapeo tonal
 
 value.tonemap.tonemap_aces_fit         = ACES Fit
-value.tonemap.tonemap_agx             = AgX
+value.tonemap.tonemap_aces_full        = ACES Full
+value.tonemap.tonemap_hejl_2015        = Hejl 2015
+value.tonemap.tonemap_hejl_burgess     = Hejl-Burgess
 value.tonemap.tonemap_lottes           = Lottes
 value.tonemap.tonemap_uncharted_2      = Uncharted 2
+value.tonemap.tonemap_tech             = Tech
+value.tonemap.tonemap_ozius            = Ozius
+value.tonemap.tonemap_reinhard         = Reinhard
+value.tonemap.tonemap_reinhard_jodie   = Reinhard-Jodie
 
 # Color Grading
 
@@ -694,12 +700,26 @@ value.DEBUG_VIEW.DEBUG_VIEW_HISTOGRAM  = Histograma
 value.DEBUG_VIEW.DEBUG_VIEW_WEATHER    = Clima
 
 value.tonemap_left.tonemap_aces_fit       = ACES Fit
+value.tonemap_left.tonemap_aces_full      = ACES Full
 value.tonemap_left.tonemap_lottes         = Lottes
+value.tonemap_left.tonemap_hejl_2015      = Hejl 2015
+value.tonemap_left.tonemap_hejl_burgess   = Hejl-Burgess
 value.tonemap_left.tonemap_uncharted_2    = Uncharted 2
+value.tonemap_left.tonemap_tech           = Tech
+value.tonemap_left.tonemap_ozius          = Ozius
+value.tonemap_left.tonemap_reinhard       = Reinhard
+value.tonemap_left.tonemap_reinhard_jodie = Reinhard-Jodie
 
 value.tonemap_right.tonemap_aces_fit       = ACES Fit
+value.tonemap_right.tonemap_aces_full      = ACES Full
 value.tonemap_right.tonemap_lottes         = Lottes
+value.tonemap_right.tonemap_hejl_burgess   = Hejl-Burgess
+value.tonemap_right.tonemap_hejl_2015      = Hejl 2015
 value.tonemap_right.tonemap_uncharted_2    = Uncharted 2
+value.tonemap_right.tonemap_tech           = Tech
+value.tonemap_right.tonemap_ozius          = Ozius
+value.tonemap_right.tonemap_reinhard       = Reinhard
+value.tonemap_right.tonemap_reinhard_jodie = Reinhard-Jodie
 
 # Distance View 
 

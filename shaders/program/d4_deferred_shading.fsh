@@ -1,8 +1,8 @@
 /*
 --------------------------------------------------------------------------------
 
-  Photon Shader by SixthSurge
-  Modified by xuyin2333
+  Pholegacy by xuyin
+  Modified from Photon Shader, original author SixthSurge
 
   program/d4_deferred_shading:
   Shade terrain and entities, draw sky
@@ -89,7 +89,7 @@ uniform sampler2D depthtex2; // minecraft cloud texture
 uniform sampler2D shadowtex0;
 uniform sampler2DShadow shadowtex1;
 
-#if defined SHADOW_COLOR
+#ifdef SHADOW_COLOR
 uniform sampler2D shadowcolor0;
 #endif
 #endif
@@ -138,14 +138,14 @@ uniform vec2 view_pixel_size;
 uniform vec2 taa_offset;
 
 uniform float biome_cave;
-uniform float biome_may_rain;
-uniform float biome_may_snow;
-uniform float biome_snowy;
 uniform float biome_temperate;
 uniform float biome_arid;
+uniform float biome_snowy;
 uniform float biome_taiga;
 uniform float biome_jungle;
 uniform float biome_swamp;
+uniform float biome_may_rain;
+uniform float biome_may_snow;
 uniform float biome_temperature;
 uniform float biome_humidity;
 
@@ -258,6 +258,10 @@ void main() {
         /* use_klein_nishina_phase */ depth == 1.0
     );
 
+    // Rain weather sky transition: blend sky color toward gray-white
+    // when raining, so the visible sky naturally matches the rainy atmosphere
+    atmosphere = mix(atmosphere, vec3(0.75, 0.75, 0.80), wetness * 1.00);
+
     // Read clouds/aurora/crepuscular rays
 
     float clouds_apparent_distance;
@@ -278,7 +282,8 @@ void main() {
         world_end_pos,
         depth == 1.0,
         blocky_clouds_altitude_l0,
-        dither
+        dither,
+        atmosphere
     );
 
 #ifdef BLOCKY_CLOUDS_LAYER_2
@@ -288,7 +293,8 @@ void main() {
         world_end_pos,
         depth == 1.0,
         blocky_clouds_altitude_l1,
-        dither
+        dither,
+        atmosphere
     );
     blocky_clouds.rgb += blocky_clouds_l2.xyz * visibility;
     blocky_clouds.a *= mix(1.0, blocky_clouds_l2.a, visibility);
@@ -407,7 +413,7 @@ void main() {
 
 #if defined WORLD_OVERWORLD && defined RAIN_PUDDLES
         if (wetness > eps && biome_may_rain > eps) {
-            get_rain_puddles(
+            bool puddle = get_rain_puddles(
                 position_world,
                 flat_normal,
                 light_levels,
@@ -458,13 +464,6 @@ void main() {
             ambient_upscaled = ambient_00;
         }
 
-#if SHADER_AO == SHADER_AO_VBIL
-        // VBIL: colortex6 = vec4(ao, gi) — no bent normal or SSS packed
-        float ao = ambient_upscaled.x;
-        vec3 gi_color = ambient_upscaled.yzw;
-        float ambient_sss = 0.0;
-        vec3 bent_normal = normal;
-#else
         float ao = ambient_upscaled.x;
         float ambient_sss = ambient_upscaled.y;
 
@@ -478,6 +477,13 @@ void main() {
         if (dot(bent_normal, normal) < eps) {
             bent_normal = normal;
         }
+
+#if SHADER_AO == SHADER_AO_VBIL
+        // VBIL: colortex6 = vec4(ao, gi) — no bent normal or SSS packed
+        ao = ambient_upscaled.x;
+        vec3 gi_color = ambient_upscaled.yzw;
+        ambient_sss = 0.0;
+        bent_normal = normal;
 #endif
 
         // No AO/bent normal on hand
@@ -606,26 +612,28 @@ void main() {
         );
 
         // VBIL indirect bounce GI: screen-space color bleed from visible surfaces
-#if SHADER_AO == SHADER_AO_VBIL
+        // Disabled with Photonics to prevent double GI (Photonics provides its own GI)
+#if SHADER_AO == SHADER_AO_VBIL && !defined(PHOTONICS_IN_USE)
         fragment_color += gi_color * material.albedo * ao;
 #endif
 
         // Specular highlight
 
 #if defined WORLD_OVERWORLD || defined WORLD_END
+        float highlight_strength = clamp01(2.0 - material.roughness * 5.0);
         fragment_color
             += get_specular_highlight(material, NoL, NoV, NoH, LoV, LoH)
-            * light_color * shadows * cloud_shadows * ao;
+            * light_color * shadows * cloud_shadows * ao * highlight_strength;
 #endif
 
         // Specular reflections
 
 #if defined ENVIRONMENT_REFLECTIONS || defined SKY_REFLECTIONS
-        float refl_strength = clamp01(2.0 - material.roughness * 5.0);
+        float refl_strength = material.is_foliage ? 0.0 : clamp01(2.0 - material.roughness * 5.0);
         if (refl_strength > 0.001) {
             mat3 tbn = get_tbn_matrix(normal);
 
-            fragment_color += get_specular_reflections(
+            vec3 reflection = get_specular_reflections(
                 material,
                 tbn,
                 vec3(uv, depth),
@@ -637,7 +645,49 @@ void main() {
                 direction_world * tbn,
                 light_levels.y,
                 false
-            ) * refl_strength;
+            );
+
+            // Use mix instead of add to prevent the "oily/greasy" look
+            float NoV_refl = clamp01(dot(normal, -direction_world));
+            vec3 fresnel_refl;
+            if (material.is_hardcoded_metal) {
+                fresnel_refl = fresnel_lazanyi_2019(NoV_refl, material.f0, material.f82);
+            } else if (material.is_metal) {
+                fresnel_refl = fresnel_schlick(NoV_refl, material.albedo);
+            } else {
+                fresnel_refl = fresnel_dielectric(NoV_refl, material.f0.x);
+            }
+            float fresnel_avg = dot(fresnel_refl, luminance_weights_rec2020);
+
+            // Modulate by reflection strength (roughness falloff)
+            float specular_mix = fresnel_avg * refl_strength;
+
+            // When diffuse is brighter than reflection, boost specular mix;
+            // when reflection is brighter, reduce it slightly
+            float diff = (length(fragment_color) - length(reflection))
+                       / (length(fragment_color) + length(reflection) + 1e-5);
+            diff = sign(diff) * sqrt(abs(diff));
+            specular_mix += 0.75 * diff * (1.0 - specular_mix) * specular_mix;
+            specular_mix = clamp01(specular_mix);
+
+            // Prevent dark reflections from darkening the scene
+            // When reflection is darker than diffuse, reduce mix strength.
+            // For smooth reflective surfaces (puddles, water), retain more
+            // of the reflection to prevent wet surfaces from losing their
+            // mirror-like appearance in low-light conditions.
+            vec3 diffuse_before = fragment_color;
+            float refl_brightness = dot(reflection, luminance_weights_rec2020);
+            float diff_brightness = dot(diffuse_before, luminance_weights_rec2020);
+            if (refl_brightness < diff_brightness) {
+                float brightness_ratio = refl_brightness / (diff_brightness + 1e-5);
+                float puddle_factor = 1.0 - smoothstep(0.0, 0.05, material.roughness);
+                brightness_ratio = mix(brightness_ratio, 1.0, puddle_factor * 0.5);
+                specular_mix *= brightness_ratio;
+            }
+
+            // Blend: mix diffuse with reflection, then add back metallic diffuse
+            fragment_color = mix(fragment_color, reflection, specular_mix);
+            fragment_color += diffuse_before * float(material.is_metal);
         }
 #endif
         // Edge highlight

@@ -1,7 +1,8 @@
 /*
 --------------------------------------------------------------------------------
 
-  Photon Shader by SixthSurge
+  Pholegacy by xuyin
+  Modified from Photon Shader, original author SixthSurge
   Modified by xuyin2333
 
   program/gbuffers_weather:

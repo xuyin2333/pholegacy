@@ -3,22 +3,77 @@
 
 #include "voxelization.glsl"
 
-bool is_emitter(uint block_id) { return 32u <= block_id && block_id < 64u; }
+bool is_emitter(uint block_id) {
+    return (32u <= block_id && block_id < 80u)
+#ifdef HARDCODED_ORE
+        || (97u <= block_id && block_id < 104u)
+#endif
+#ifdef COLORED_CANDLES
+        || (104u <= block_id && block_id < 121u)
+#endif
+    ;
+}
 
-bool is_translucent(uint block_id) { return 64u <= block_id && block_id < 80u; }
+bool is_translucent(uint block_id) { return 80u <= block_id && block_id < 96u; }
 
 vec3 get_emitted_light(uint block_id) {
     if (is_emitter(block_id)) {
-        return texelFetch(light_data_sampler, ivec2(int(block_id) - 32, 0), 0)
-            .rgb;
-    } else {
-        return vec3(0.0);
+        if (32u <= block_id && block_id < 80u) {
+            return texelFetch(
+                       light_data_sampler,
+                       ivec2(int(block_id) - 32, 0),
+                       0
+                   )
+                .rgb;
+        }
+
+#ifdef HARDCODED_ORE
+        if (97u <= block_id && block_id < 104u) {
+            // Glowing ores (inspired by Photon-GAMS: https://github.com/Arona74/Photon-GAMS).
+            // floodfill.glsl squares emitted_light before storing, so values
+            // here are roughly on the sqrt-energy scale used by light_color[].
+            if (block_id == 97u) return vec3(0.85, 0.59, 0.45) * 2.5; // Iron
+            if (block_id == 98u) return vec3(0.12, 1.00, 0.35) * 2.5; // Emerald
+            if (block_id == 99u) return vec3(1.00, 0.84, 0.20) * 2.5; // Gold
+            if (block_id == 100u) return vec3(0.12, 0.18, 0.95) * 2.5; // Lapis
+            if (block_id == 101u) return vec3(0.76, 0.86, 0.41) * 2.5; // Copper
+            if (block_id == 102u) return vec3(0.25, 0.85, 0.95) * 2.5; // Diamond
+            if (block_id == 103u) return vec3(1.00, 0.08, 0.08) * 2.5; // Redstone
+        }
+#endif
+
+#ifdef COLORED_CANDLES
+        if (104u <= block_id && block_id < 121u) {
+            // Colored candles (inspired by Photon-GAMS: https://github.com/Arona74/Photon-GAMS).
+            // Each dye color maps to its own block_id so the LPV emits the
+            // matching color into the voxel volume.
+            if (block_id == 104u) return vec3(1.00, 0.12, 0.12) * 3.0; // Red
+            if (block_id == 105u) return vec3(1.00, 0.58, 0.12) * 3.0; // Orange
+            if (block_id == 106u) return vec3(1.00, 0.90, 0.15) * 3.0; // Yellow
+            if (block_id == 107u) return vec3(0.55, 0.35, 0.18) * 3.0; // Brown
+            if (block_id == 108u) return vec3(0.10, 1.00, 0.20) * 3.0; // Green
+            if (block_id == 109u) return vec3(0.40, 1.00, 0.10) * 3.0; // Lime
+            if (block_id == 110u) return vec3(0.10, 0.20, 1.00) * 3.0; // Blue
+            if (block_id == 111u) return vec3(0.25, 0.70, 1.00) * 3.0; // Light blue
+            if (block_id == 112u) return vec3(0.10, 0.88, 0.90) * 3.0; // Cyan
+            if (block_id == 113u) return vec3(0.70, 0.15, 1.00) * 3.0; // Purple
+            if (block_id == 114u) return vec3(1.00, 0.15, 0.70) * 3.0; // Magenta
+            if (block_id == 115u) return vec3(1.00, 0.55, 0.65) * 3.0; // Pink
+            if (block_id == 116u) return vec3(0.15, 0.15, 0.15) * 3.0; // Black
+            if (block_id == 117u) return vec3(1.00, 0.90, 0.75) * 3.0; // White
+            if (block_id == 118u) return vec3(0.35, 0.35, 0.37) * 3.0; // Gray
+            if (block_id == 119u) return vec3(0.70, 0.70, 0.65) * 3.0; // Light gray
+            if (block_id == 120u) return vec3(1.00, 0.85, 0.60) * 3.0; // Uncolored
+        }
+#endif
     }
+
+    return vec3(0.0);
 }
 
 vec3 get_tint(uint block_id, bool is_transparent) {
     if (is_translucent(block_id)) {
-        return texelFetch(light_data_sampler, ivec2(int(block_id) - 64, 1), 0)
+        return texelFetch(light_data_sampler, ivec2(int(block_id) - 80, 1), 0)
             .rgb;
     } else {
         return vec3(is_transparent);

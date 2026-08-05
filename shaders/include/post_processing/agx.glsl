@@ -7,6 +7,7 @@
 // Original: https://github.com/sobotka/AgX
 //
 // Adapted from Photon-GAMS-dev community implementation
+// https://github.com/Arona74/Photon-GAMS
 
 vec3 agx_default_contrast_approx(vec3 x) {
     vec3 x2 = x * x;
@@ -40,13 +41,13 @@ vec3 agx_pre(vec3 rgb) {
         0.0792237451477643, 0.0791661274605434, 0.879142973793104
     );
 
-    const float min_ev = -7.5;
-    const float max_ev = 5.5;
-    const float middle_grey = 0.18;
+    // Tightened EV range (~13 stops) for improved mid-tone contrast
+    const float min_ev = -10.0;
+    const float max_ev = 3.0;
 
     rgb = agx_mat * rgb;
 
-    rgb = clamp(log2(rgb * (1.0 / middle_grey)), min_ev, max_ev);
+    rgb = clamp(log2(rgb), min_ev, max_ev);
     rgb = (rgb - min_ev) / (max_ev - min_ev);
 
     return rgb;
@@ -65,7 +66,9 @@ vec3 agx_eotf(vec3 val) {
 }
 
 vec3 tonemap_agx(vec3 rgb) {
-    rgb *= 1.2;
+    // Mirror Photon-GAMS-dev's AGX exactly: run the transform in the
+    // Rec.2020 working space and let the color-grading pass handle the
+    // final gamma encoding.
     rgb = agx_pre(rgb);
 
     rgb = agx_default_contrast_approx(rgb);

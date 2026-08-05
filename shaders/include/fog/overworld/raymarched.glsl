@@ -7,39 +7,9 @@
 #include "/include/misc/lod_mod_support.glsl"
 #include "/include/sky/atmosphere.glsl"
 #include "/include/utility/encoding.glsl"
-#include "/include/utility/fast_math.glsl"
 #include "/include/utility/phase_functions.glsl"
 #include "/include/utility/random.glsl"
 #include "/include/utility/space_conversion.glsl"
-
-#ifdef AIR_FOG_CLOUDY_NOISE
-// Improved 3D noise with better structure
-float noise3d(vec3 pos) {
-    // Sample noise texture on three planes for 3D approximation
-    float n1 = texture(noisetex, pos.xy * 0.08).w;
-    float n2 = texture(noisetex, pos.xz * 0.08).w;
-    float n3 = texture(noisetex, pos.yz * 0.08).w;
-    return (n1 + n2 + n3) * (1.0 / 3.0);
-}
-
-// Curl noise for swirling motion — optimized with cached derivatives
-vec3 curlNoise(vec3 pos) {
-    const float e = 0.1;
-    float dx0 = noise3d(pos + vec3(e, 0.0, 0.0));
-    float dx1 = noise3d(pos - vec3(e, 0.0, 0.0));
-    float dy0 = noise3d(pos + vec3(0.0, e, 0.0));
-    float dy1 = noise3d(pos - vec3(0.0, e, 0.0));
-    float dz0 = noise3d(pos + vec3(0.0, 0.0, e));
-    float dz1 = noise3d(pos - vec3(0.0, 0.0, e));
-    
-    float dfdx = (dx0 - dx1) / (2.0 * e);
-    float dfdy = (dy0 - dy1) / (2.0 * e);
-    float dfdz = (dz0 - dz1) / (2.0 * e);
-    
-    // Curl of vector field (f, f, f): (df/dy - df/dz, df/dz - df/dx, df/dx - df/dy)
-    return vec3(dfdy - dfdz, dfdz - dfdx, dfdx - dfdy);
-}
-#endif
 
 vec2 air_fog_density(vec3 world_pos) {
     const vec2 mul = -rcp(air_fog_falloff_half_life);
@@ -51,51 +21,79 @@ vec2 air_fog_density(vec3 world_pos) {
     density *= linear_step(air_fog_volume_bottom, SEA_LEVEL, world_pos.y);
 
 #ifdef AIR_FOG_CLOUDY_NOISE
-    // Height-based density shaping - wispy at bottom, solid at top
-    float height_fraction = clamp01((world_pos.y - air_fog_volume_bottom) / (air_fog_volume_top - air_fog_volume_bottom));
-    
-    // Wind animation with curl noise for swirling motion
-    const vec3 wind = 0.0003 * vec3(1.0, 0.3, 0.5);
-    vec3 noise_pos = world_pos * 0.006 + wind * frameTimeCounter;
-    
-    // Apply curl noise for natural swirling
-    vec3 curl_offset = 0.15 * curlNoise(noise_pos * 0.5);
-    noise_pos += curl_offset;
-    
-    // Multi-octave FBM for cloud-like structure — 2 octaves (down from 4)
-    // for performance. Temporal accumulation fills in the missing detail.
-    float fbm = 0.0;
-    float amp = 1.0;
-    float freq = 1.0;
-    for (int j = 0; j < 2; j++) {
-        fbm += amp * noise3d(noise_pos * freq);
-        freq *= 2.8;
-        amp *= 0.45;
-        noise_pos += wind * frameTimeCounter * 0.3;
-    }
-    
-    // Shape density - create cloud-like clumps in the mid-range
-    float cloud_shape = smoothstep(0.0, 0.3, height_fraction) * (1.0 - smoothstep(0.6, 1.0, height_fraction));
-    
-    // Noise-based density modulation
-    float noise_factor = max(fbm * 1.5 - 0.3, 0.0);
-    noise_factor = min(noise_factor, 1.0);
-    
-    // Structure: baseline 1.0, up to ~1.4x in dense noisy areas
-    float structure = 1.0 + 0.4 * noise_factor * (0.5 + 0.5 * cloud_shape);
+    // 3D worley noise FBM for volumetric fog clumping.
+    // Uses a 64x64x64 3D worley noise texture (colortex0) for spatial
+    // structure, direct density modulation for visible patches, and
+    // lift() sharpening for clean patch boundaries.
 
-    // Extra density at mid-altitude goes up to ~1.25x max, baseline 1.0
-    float altitude_density = 1.0 + 0.25 * cloud_shape;
+    vec3 wind = 0.00015 * vec3(1.0, 0.3, 0.7) * frameTimeCounter;
+    vec3 p = world_pos * 0.002 + wind;
 
-    density.y *= structure * altitude_density;
+    // 3-octave 3D worley FBM with domain warping for turbulent, cloud-like
+    // clumping. The low-frequency octave is used to warp the sampling
+    // coordinates of the mid/high octaves, producing elongated, flowing
+    // fog structures instead of round blobs.
+    float worley_0 = texture(colortex0, p).r;
+    float worley_1 = texture(colortex0, p * 3.5 + wind * 1.5).r;
+    float worley_2 = texture(colortex0, p * 9.0 + wind * 2.8).r;
+
+    // Domain warp: use the lowest-frequency octave to distort the other two.
+    // This mimics the advection patterns seen in real low-lying clouds.
+    vec3 warp = 0.35 * (worley_0 - 0.5) * vec3(1.0, 0.4, 1.0);
+    worley_1 = texture(colortex0, p * 3.5 + wind * 1.5 + warp).r;
+    worley_2 = texture(colortex0, p * 9.0 + wind * 2.8 + warp * 2.0).r;
+
+    float worley_fbm = worley_0 * 0.50 + worley_1 * 0.30 + worley_2 * 0.20;
+
+    // Direct density modulation via noise inversion, creating visible
+    // thick/thin fog patches. Contrast is amplified so that FBM variations
+    // produce a wide dynamic range between thin gaps and dense clumps.
+    float noise_mod = sqr(1.0 - worley_fbm);
+    noise_mod = noise_mod * 2.5 + 0.15;
+
+    // Uniform base layer: blend a minimum uniform density with the noise-
+    // modulated density. This ensures gaps in the clumping retain some
+    // atmospheric haze instead of looking completely empty, while the
+    // noise-modulated portion maintains the full clump structure.
+    density.y = density.y * (0.15 + 0.85 * noise_mod);
+
+    // lift() sharpening: creates cleaner patch boundaries by non-linearly
+    // remapping the density curve (cloud-style edge sharpening).
+    density.y = lift(max0(density.y), 3.0);
+
+    // Altitude shaping: clumps peak near sea level and fade toward the
+    // volume top/bottom, preventing unnatural patches at extreme heights.
+    float height_weight
+        = smoothstep(air_fog_volume_bottom, SEA_LEVEL, world_pos.y)
+        * (1.0
+           - smoothstep(SEA_LEVEL + 24.0, air_fog_volume_top, world_pos.y));
+    density.y *= 0.1 + 0.9 * height_weight;
+
 #endif
 
-    return density * (0.5 * OVERWORLD_FOG_INTENSITY);
+    // Time-of-day density modulation.
+    // Physical intuition: daytime solar heating suppresses fog formation,
+    // nighttime radiative cooling promotes it, with a small boost around
+    // twilight hours when relative humidity typically peaks.
+    // Modulation is kept subtle (±~20%) so fog never becomes invisible.
+    // Noon stays close to the baseline while morning/evening get a modest
+    // boost and deepest night a slightly larger one.
+    float time_density_mod = 1.0
+        + 0.15 * time_sunrise
+        + 0.40 * time_sunset
+        + 0.60 * time_midnight;
+    density *= time_density_mod;
+
+    return density * (OVERWORLD_FOG_INTENSITY); // doubled from 0.5× → full 1.0×
 }
+
+// Fast exp(-x) approximation for x in [0, ~10]
+float fast_exp_neg(float x) { return exp2(-1.4426950409 * x); }
+vec3 fast_exp_neg(vec3 v) { return exp2(-1.4426950409 * v); }
 
 // Fast density without noise — used for sunlight transmittance raymarch.
 // Only computes height-based exponential falloff, skipping the expensive
-// FBM + curl noise. This reduces the per-step cost of the 3-sample sunlight
+// FBM + noise. This reduces the per-step cost of the 3-sample sunlight
 // raymarch from ~90 noise texture fetches to zero.
 vec2 air_fog_density_fast(vec3 world_pos) {
     const vec2 mul = -rcp(air_fog_falloff_half_life);
@@ -104,7 +102,15 @@ vec2 air_fog_density_fast(vec3 world_pos) {
     vec2 density = exp2(min(world_pos.y * mul + add, 0.0));
     density *= linear_step(air_fog_volume_bottom, SEA_LEVEL, world_pos.y);
 
-    return density * (0.5 * OVERWORLD_FOG_INTENSITY);
+    // Match the diurnal modulation of air_fog_density() so the sunlight
+    // transmittance raymarch stays consistent with the main raymarch.
+    float time_density_mod = 1.0
+        + 0.15 * time_sunrise
+        + 0.40 * time_sunset
+        + 0.60 * time_midnight;
+    density *= time_density_mod;
+
+    return density * (OVERWORLD_FOG_INTENSITY);
 }
 
 mat2x3 raymarch_air_fog(
@@ -170,29 +176,24 @@ mat2x3 raymarch_air_fog(
     );
     step_count = min(step_count, air_fog_max_step_count);
 
+    float LoV = dot(world_dir, light_dir);
+
     float rSteps = rcp(float(step_count));
     float base_step_length = ray_length * rSteps * rSteps;
 
-    float LoV = dot(world_dir, light_dir);
-
     vec3 transmittance = vec3(1.0);
 
-    mat2x3 light_sun = mat2x3(0.0);
-    mat2x3 light_sky = mat2x3(0.0);
+    mat2x3 light_sun = mat2x3(0.0); // Rayleigh, mie
+    mat2x3 light_sky = mat2x3(0.0); // Rayleigh, mie
 
     for (int i = 0; i < step_count; ++i) {
         float fi = float(i) + dither;
         float fi_prev = max(fi - 1.0, 0.0);
-
         float actual_step_length = base_step_length * (sqr(fi) - sqr(fi_prev));
         float current_distance = distance_to_volume_start + base_step_length * sqr(fi);
 
         vec3 world_pos = world_start_pos + world_dir * current_distance;
         vec3 shadow_pos = shadow_start_pos + shadow_dir * current_distance;
-
-        vec2 density = air_fog_density(world_pos) * actual_step_length;
-
-        if (dot(density, vec2(1.0)) < 1e-6) continue;
 
         vec3 shadow_screen_pos = distort_shadow_space(shadow_pos) * 0.5 + 0.5;
 
@@ -227,6 +228,10 @@ mat2x3 raymarch_air_fog(
 #define shadow 1.0
 #endif
 
+        vec2 density = air_fog_density(world_pos) * actual_step_length;
+
+        if (dot(density, vec2(1.0)) < 1e-6) continue;
+
         vec3 step_optical_depth
             = fog_params.rayleigh_scattering_coeff * density.x
             + fog_params.mie_extinction_coeff * density.y;
@@ -253,15 +258,27 @@ mat2x3 raymarch_air_fog(
             + fog_params.mie_extinction_coeff * optical_depth_sun.y;
         vec3 sun_transmittance = fast_exp_neg(step_optical_depth_sun);
 
-        // Phase 1: Powder Effect - stronger scattering toward light direction
+        // Multi-scattering approximation for sunlight.
+        // Analytic geometric-series approximation of higher-order scattering
+        // energy. Each order contributes ~half the previous one and is
+        // attenuated by the sun-side optical depth; this captures the
+        // intuition that thicker fog produces more multi-scatter glow but
+        // also self-absorbs it, without running a per-step phase loop.
+        float od_sun_mean = dot(step_optical_depth_sun, vec3(1.0 / 3.0));
+        float ms_boost = 1.0
+            + 0.40 * fast_exp_neg(0.5 * od_sun_mean)
+            + 0.18 * fast_exp_neg(1.0 * od_sun_mean);
+
+        // Powder Effect: stronger scattering toward light direction
+        // at density boundaries, producing a soft volumetric glow
         float LoV01 = LoV * 0.5 + 0.5;
         float step_density = dot(step_optical_depth, vec3(1.0 / 3.0));
         float powder = (1.0 - fast_exp_neg(0.5 * step_density)) * (1.0 - LoV01) + LoV01;
 
         vec3 visible_scattering = step_transmitted_fraction * transmittance * powder;
 
-        light_sun[0] += visible_scattering * density.x * shadow * sun_transmittance;
-        light_sun[1] += visible_scattering * density.y * shadow * sun_transmittance;
+        light_sun[0] += visible_scattering * density.x * shadow * sun_transmittance * ms_boost;
+        light_sun[1] += visible_scattering * density.y * shadow * sun_transmittance * ms_boost;
         light_sky[0] += visible_scattering * density.x;
         light_sky[1] += visible_scattering * density.y;
 
@@ -281,8 +298,8 @@ mat2x3 raymarch_air_fog(
         light_sky[1] *= max(skylight, eye_skylight);
     }
 
-    float mie_phase = 0.7 * henyey_greenstein_phase(LoV, 0.5)
-        + 0.3 * henyey_greenstein_phase(LoV, -0.2);
+    float mie_phase = 0.8 * henyey_greenstein_phase(LoV, 0.88)
+        + 0.2 * henyey_greenstein_phase(LoV, -0.2);
 
     /*
     // Single scattering
@@ -292,20 +309,22 @@ mat2x3 raymarch_air_fog(
     /*/
     // Multiple scattering
     vec3 scattering = vec3(0.0);
-    float scatter_amount = 1.0;
+    float scatter_amount = 1.5;
     float anisotropy = 1.0;
 
-    // Boost ambient brightness so fog doesn't look dim
-    vec3 fog_ambient = max(ambient_color, vec3(0.06));
+#if defined PROGRAM_DEFERRED0
+    vec3 ambient_color = ambient_color_fog;
+#endif
 
-    scattering += 2.8 * light_sky * vec2(isotropic_phase) * fog_ambient;
+    scattering += 4.0 * light_sky * vec2(isotropic_phase) * ambient_color;
 
     for (int i = 0; i < 4; ++i) {
-        float mie_phase = 0.7 * henyey_greenstein_phase(LoV, 0.5 * anisotropy)
-            + 0.3 * henyey_greenstein_phase(LoV, -0.2 * anisotropy);
+        float mie_phase = 0.8 * henyey_greenstein_phase(LoV, 0.88 * anisotropy)
+            + 0.2 * henyey_greenstein_phase(LoV, -0.2 * anisotropy);
 
         scattering += scatter_amount
-            * (light_sun * vec2(isotropic_phase, mie_phase)) * light_color;
+            * (light_sun * vec2(isotropic_phase, mie_phase)) * light_color
+            * (1.0 - 0.9 * rainStrength);
 
         scatter_amount *= 0.5;
         anisotropy *= 0.7;
@@ -318,6 +337,11 @@ mat2x3 raymarch_air_fog(
     float evening_glow
         = 0.75 * linear_step(0.05, 1.0, exp(-300.0 * sqr(sun_dir.y + 0.02)));
     scattering += scattering * evening_glow;
+
+    // Rain color shift: match fog color to gray-blue rain lighting
+    const vec3 fog_rain_tint = vec3(0.92, 0.95, 1.0);
+    float fog_lum = dot(scattering, vec3(0.2627, 0.6780, 0.0593));
+    scattering = mix(scattering, vec3(fog_lum) * fog_rain_tint, rainStrength * 0.80);
 
     return mat2x3(scattering, transmittance);
 }

@@ -1,8 +1,8 @@
 /*p0_cl
 --------------------------------------------------------------------------------
 
-  Photon Shader by SixthSurge
-  Modified by xuyin2333
+  Pholegacy by xuyin
+  Modified from Photon Shader, original author SixthSurge
 
   program/p0_clouds_prep:
   Create cloud cumulus coverage map and cloud shadow map
@@ -78,6 +78,9 @@ uniform float time_midnight;
 
 uniform float biome_cave;
 uniform float biome_may_snow;
+
+uniform sampler2D depthtex2; // minecraft cloud texture (for blocky clouds)
+uniform float wetness;
 
 const vec3 sun_color = vec3(0.0);
 const vec3 moon_color = vec3(0.0);

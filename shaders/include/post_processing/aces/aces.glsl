@@ -12,16 +12,18 @@
 
 // Constants
 
-const float rrt_glow_gain = 0.05; // default: 0.05
+const float rrt_glow_gain = 0.1; // default: 0.05
 const float rrt_glow_mid = 0.08; // default: 0.08
 
-const float rrt_red_scale = 0.82; // default: 0.82
+const float rrt_red_scale = 1.0; // default: 0.82
 const float rrt_red_pivot = 0.03; // default: 0.03
 const float rrt_red_hue = 0.0; // default: 0.0
 const float rrt_red_width = 135.0; // default: 135.0
 
 const float rrt_sat_factor = 0.96; // default: 0.96
-const float odt_sat_factor = 0.93; // default: 0.93
+const float odt_sat_factor = 1.0; // default: 0.93
+
+const float rrt_gamma_curve = 0.96;
 
 const float cinema_white = 48.0; // default: 48.0
 const float cinema_black = 0.02; // default: 10^log_10(0.02)
@@ -120,6 +122,9 @@ vec3 rrt_sweeteners(vec3 aces) {
     // Global desaturation
     float luminance = dot(rgb_pre, luminance_weights_ap1);
     rgb_pre = mix(vec3(luminance), rgb_pre, rrt_sat_factor);
+
+    // Added gamma adjustment before the RRT
+    rgb_pre = pow(rgb_pre, vec3(rrt_gamma_curve));
 
     return rgb_pre;
 }

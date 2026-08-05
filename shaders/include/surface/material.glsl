@@ -25,9 +25,9 @@ struct Material {
 const Material water_material = Material(
     vec3(0.0),
     vec3(0.0),
-    vec3(0.01),
+    vec3(0.02),
     vec3(0.0),
-    0.01,
+    0.002,
     1.0,
     0.0,
     0.0,
@@ -96,9 +96,12 @@ void decode_specular_map(vec4 specular_map, inout Material material) {
         material.is_metal = true;
     }
 
-    material.ssr_multiplier = clamp01(2.0 - material.roughness * 5.0);
+    material.ssr_multiplier = step(
+        0.01,
+        (material.f0.x
+         - material.f0.x * material.roughness * SSR_ROUGHNESS_THRESHOLD)
+    ); // based on Kneemund's method
 }
-
 #elif TEXTURE_FORMAT == TEXTURE_FORMAT_OLD
 void decode_specular_map(vec4 specular_map, inout Material material) {
     material.roughness = sqr(1.0 - specular_map.r);
@@ -107,7 +110,11 @@ void decode_specular_map(vec4 specular_map, inout Material material) {
     material.emission
         = max(material.emission, material.albedo * specular_map.b);
 
-    material.ssr_multiplier = clamp01(2.0 - material.roughness * 5.0);
+    material.ssr_multiplier = step(
+        0.01,
+        (material.f0.x
+         - material.f0.x * material.roughness * SSR_ROUGHNESS_THRESHOLD)
+    ); // based on Kneemund's method
 }
 #endif
 
@@ -176,29 +183,29 @@ Material material_from(
                     } else { // 2-4
                         if (material_mask == 2u) { // 2
 #ifdef HARDCODED_SSS
-                            // Small plants — Rev-style SSS + sheen for textured backlight
+                            // Small plants
                             material.sss_amount = 0.40;
                             material.sheen_amount = 0.25;
-                            material.is_foliage = true;
 #endif
+                            material.is_foliage = true;
                         } else { // 3
 #ifdef HARDCODED_SSS
-                            // Tall plants (lower half) — Rev-style SSS + sheen for textured backlight
+                            // Tall plants (lower half)
                             material.sss_amount = 0.40;
                             material.sheen_amount = 0.25;
-                            material.is_foliage = true;
 #endif
+                            material.is_foliage = true;
                         }
                     }
                 } else { // 4-8
                     if (material_mask < 6u) { // 4-6
                         if (material_mask == 4u) { // 4
 #ifdef HARDCODED_SSS
-                            // Tall plants (upper half) — Rev-style SSS + sheen for textured backlight
+                            // Tall plants (upper half)
                             material.sss_amount = 0.40;
                             material.sheen_amount = 0.25;
-                            material.is_foliage = true;
 #endif
+                            material.is_foliage = true;
                         } else { // 5
 // Leaves
 #ifdef HARDCODED_SPECULAR
@@ -206,15 +213,13 @@ Material material_from(
                                 = 0.5 * smoothstep(0.16, 0.5, hsl.z);
                             material.roughness = sqr(1.0 - smoothness);
                             material.f0 = vec3(0.02);
-                            material.sheen_amount = 0.5;
+                            material.sheen_amount = 0.30;
 #endif
 
 #ifdef HARDCODED_SSS
-                            // Leaves — Rev-style SSS + sheen for natural translucency
                             material.sss_amount = 0.55;
-                            material.sheen_amount = 0.30;
-                            material.is_foliage = true;
 #endif
+                            material.is_foliage = true;
                         }
                     } else { // 6-8
                         if (material_mask == 6u) { // 6
@@ -301,10 +306,10 @@ Material material_from(
                     } else { // 14-16
                         if (material_mask == 14u) { // 14
 #ifdef HARDCODED_SSS
-                            // Strong SSS plants (sugar cane, bamboo, vines, etc.) — Rev-style SSS
+                            // Strong SSS
                             material.sss_amount = 0.40;
-                            material.is_foliage = true;
 #endif
+                            material.is_foliage = true;
                         } else { // 15
 #ifdef HARDCODED_SSS
                             // Weak SSS
@@ -605,12 +610,10 @@ Material material_from(
 #endif
                         } else { // 39
 #ifdef HARDCODED_EMISSION
-                            // Lava — boost redness and brightness
-                            float redness = isolate_hue(hsl, 15.0, 30.0);
-                            float hot = pow4(hsl.z) * 0.7 + 0.3 * hsl.z;
-                            material.emission = 4.0 * albedo_sqrt
-                                * (0.3 + 0.7 * redness)
-                                * smoothstep(0.2, 0.5, hsl.y) * hot;
+                            // Lava
+                            material.emission = 2.0 * albedo_sqrt
+                                * (0.2 + 0.8 * isolate_hue(hsl, 30.0, 15.0))
+                                * step(0.4, hsl.y) * hsl.z;
 #endif
                         }
                     }
@@ -780,11 +783,10 @@ Material material_from(
                             // Open eyeblossom
 
 #ifdef HARDCODED_SSS
-                            // Open eyeblossom — Rev-style SSS + sheen
                             material.sss_amount = 0.40;
                             material.sheen_amount = 0.25;
-                            material.is_foliage = true;
 #endif
+                            material.is_foliage = true;
 
 #ifdef HARDCODED_EMISSION
                             // Redstone block
@@ -844,6 +846,61 @@ Material material_from(
         material.sss_amount = 0.5;
 #endif
     }
+
+// -------------------------------------------------------------------------
+// Glowing Ore: surface emission for ore blocks (inspired by Photon-GAMS: https://github.com/Arona74/Photon-GAMS)
+// Masks 180-186: iron/emerald/gold/lapis/copper/diamond/redstone(unlit)
+// Uses albedo_sqrt so emission interacts correctly with the diffuse lighting
+// pass (which multiplies the full lighting buffer by material.albedo).
+// This makes each ore glow in its natural ore-vein color.
+// Pixel filter: only saturated/bright ore-vein pixels emit; stone does not.
+// -------------------------------------------------------------------------
+
+#ifdef HARDCODED_ORE
+
+    if (97u <= material_mask && material_mask < 104u) {
+        // Ore-vein pixel filter: require saturation > 0.1 and brightness > 0.35
+        // so the surrounding stone background does not emit.
+        if (hsl.y > 0.1 && hsl.z > 0.35) {
+            // Diamond ore uses a stricter brightness threshold (matches GAMS: https://github.com/Arona74/Photon-GAMS)
+            float brightness_threshold
+                = material_mask == 102u ? 0.72 : 0.35;
+
+            if (hsl.z > brightness_threshold) {
+                // Use albedo_sqrt for surface emission so the hue comes from
+                // the ore texture itself (matches GAMS behaviour: https://github.com/Arona74/Photon-GAMS).
+                material.emission = albedo_sqrt * ORE_BRIGHTNESS * 0.22;
+            }
+        }
+
+#ifdef HARDCODED_SPECULAR
+        float smoothness = 0.4 * smoothstep(0.2, 0.6, hsl.z);
+        material.roughness = sqr(1.0 - smoothness);
+        material.f0 = vec3(0.02);
+#endif
+    }
+
+#endif // HARDCODED_ORE
+
+// -------------------------------------------------------------------------
+// Colored Candles: surface emission (inspired by Photon-GAMS: https://github.com/Arona74/Photon-GAMS)
+// Masks 200-216: 16 minecraft dye colors + uncolored.
+// Each color gets its own mask so the LPV can emit matching colored light
+// into the voxel volume. Surface emission uses albedo_sqrt so the candle
+// body glows in its dye color and the flame glows warm white automatically.
+// -------------------------------------------------------------------------
+
+#ifdef COLORED_CANDLES
+
+    if (104u <= material_mask && material_mask < 121u) {
+        material.emission = albedo_sqrt * 0.8;
+    }
+
+#endif // COLORED_CANDLES
+
+#ifdef HARDCODED_EMISSION
+    material.emission *= HARDCODED_EMISSION_I;
+#endif
 
     return material;
 }

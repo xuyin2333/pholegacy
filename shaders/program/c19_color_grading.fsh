@@ -1,8 +1,8 @@
 /*
 --------------------------------------------------------------------------------
 
-  Photon Shader by SixthSurge
-  Modified by xuyin2333
+  Pholegacy by xuyin
+  Modified from Photon Shader, original author SixthSurge
 
   program/c19_color_grading:
   Apply bloom, color grading and tone mapping then convert to rec. 709
@@ -38,6 +38,7 @@ uniform float frameTimeCounter;
 uniform float biome_cave;
 uniform float time_noon;
 uniform float eye_skylight;
+uniform float rainStrength;
 
 uniform vec2 view_pixel_size;
 
@@ -46,7 +47,7 @@ uniform vec2 view_pixel_size;
 #include "/include/utility/color.glsl"
 
 vec3 get_bloom() {
-    // Upsample last bloom tile.
+    // Upsample last bloom tile. 
 
     vec2 pad_amount = 6.0 * view_pixel_size;
     vec2 uv_src = clamp(uv, pad_amount, 1.0 - pad_amount) * 0.5;
@@ -54,36 +55,15 @@ vec3 get_bloom() {
     return BLOOM_UPSAMPLING_FILTER(colortex0, uv_src).rgb;
 }
 
-// Large-scale bloom for bloomy fog — samples a smaller tile for wider light spread
-// in foggy areas, mimicking bright light scattering through haze
-vec3 get_fog_bloom() {
-    vec2 pad_amount = 6.0 * view_pixel_size;
-    vec2 uv_src = clamp(uv, pad_amount, 1.0 - pad_amount) * 0.125 + vec2(0.75, 0.0);
-    return texture(colortex0, uv_src).rgb;
-}
-
-// Color grading
-
-vec3 gain(vec3 x, float k) {
-    vec3 a = 0.5 * pow(2.0 * mix(x, 1.0 - x, step(0.5, x)), vec3(k));
-    return mix(a, 1.0 - a, step(0.5, x));
-}
-
 // Color grading applied before tone mapping
 // rgb := color in acescg [0, inf]
 vec3 grade_input(vec3 rgb) {
-    float brightness = 1.00 * GRADE_BRIGHTNESS;
-    float contrast = 1.00 * GRADE_CONTRAST;
-    float saturation = 1.00 * GRADE_SATURATION;
+    float brightness = 0.83 * GRADE_BRIGHTNESS;
+    float saturation = 0.98 * GRADE_SATURATION;
+    saturation = mix(saturation, 0.9, rainStrength);
 
     // Brightness
     rgb *= brightness;
-
-    // Contrast
-    const float log_midpoint = log2(0.18);
-    rgb = log2(rgb + eps);
-    rgb = contrast * (rgb - log_midpoint) + log_midpoint;
-    rgb = max0(exp2(rgb) - eps);
 
     // Saturation
     float lum = dot(rgb, luminance_weights);
@@ -104,36 +84,17 @@ vec3 grade_input(vec3 rgb) {
 // Color grading applied after tone mapping
 // rgb := color in linear rec.709 [0, 1]
 vec3 grade_output(vec3 rgb) {
-    // Convert to roughly perceptual RGB for color grading
-    rgb = sqrt(rgb);
+    float contrast = GRADE_CONTRAST;
 
-    // HSL color grading inspired by Tech's color grading setup in Lux Shaders
+    // Log-space contrast, pivoted around 0.18 (mid-gray linear)
+    // contrast = 1.0 → identity; >1 增强对比; <1 降低对比
+    rgb = max(rgb, vec3(1e-6));
+    vec3 log_rgb = log2(rgb);
+    float pivot = log2(0.18);
+    log_rgb = pivot + (log_rgb - pivot) * contrast;
+    rgb = exp2(log_rgb);
 
-    const float orange_sat_boost = GRADE_ORANGE_SAT_BOOST;
-    const float teal_sat_boost = GRADE_TEAL_SAT_BOOST;
-    const float green_sat_boost = GRADE_GREEN_SAT_BOOST;
-    const float green_hue_shift = GRADE_GREEN_HUE_SHIFT / 360.0;
-
-    vec3 hsl = rgb_to_hsl(rgb);
-
-    // Oranges
-    float orange = isolate_hue(hsl, 30.0, 20.0);
-    hsl.y *= 1.0 + orange_sat_boost * orange;
-
-    // Teals
-    float teal = isolate_hue(hsl, 210.0, 20.0);
-    hsl.y *= 1.0 + teal_sat_boost * teal;
-
-    // Greens
-    float green = isolate_hue(hsl, 90.0, 44.0);
-    hsl.x += green_hue_shift * green;
-    hsl.y *= 1.0 + green_sat_boost * green;
-
-    rgb = hsl_to_rgb(hsl);
-
-    rgb = gain(rgb, 1.00);
-
-    return sqr(rgb);
+    return clamp01(rgb);
 }
 
 float vignette(vec2 uv) {
@@ -162,25 +123,25 @@ void main() {
 
 #ifdef BLOOM
     vec3 bloom = get_bloom();
-    float bloom_intensity = 0.15 * BLOOM_INTENSITY;
+    float bloom_intensity = 0.12 * BLOOM_INTENSITY;
 
     scene_color = mix(scene_color, bloom, bloom_intensity);
 
 #ifdef BLOOMY_FOG
-    // Bloomy fog: large-scale bloom bleeds into foggy areas, stronger in darkness.
-    // colortex3 stores transmittance luminance (0 = thick fog, 1 = no fog)
-    float bloomy_fog = texture(colortex3, uv * taau_render_scale).x;
+    vec2 bloomy_data = texture(colortex3, uv * taau_render_scale).rg;
 
-    vec3 fog_bloom = get_fog_bloom();
-
-    float scene_luminance = dot(scene_color, luminance_weights);
-    float bloomy_strength = 0.5 - 0.35 * linear_step(0.05, 1.0, scene_luminance);
-    bloomy_strength = max(bloomy_strength, 0.15);
-
-    float bloomy_amount = clamp01(
-        bloomy_strength * BLOOMY_FOG_INTENSITY * (1.0 - bloomy_fog)
+    // Normal bloomy fog: intensity controlled by BLOOMY_FOG_INTENSITY
+    scene_color = mix(
+        bloom,
+        scene_color,
+        pow(bloomy_data.x, BLOOMY_FOG_INTENSITY)
     );
-    scene_color = mix(scene_color, fog_bloom, bloomy_amount);
+
+#ifdef BLOOMY_RAIN
+    // Rain bloom: independent channel, fixed intensity, unaffected by
+    // BLOOMY_FOG_INTENSITY
+    scene_color = mix(bloom, scene_color, 1.0 - bloomy_data.y);
+#endif
 #endif
 #endif
 
@@ -201,15 +162,4 @@ void main() {
 
     scene_color = clamp01(scene_color * working_to_display_color);
     scene_color = grade_output(scene_color);
-
-#if 0 // Tonemap plot
-	const float scale = 2.0;
-	vec2 uv_scaled = uv * scale * vec2(1.0, 1.0 / aspectRatio);
-	float x = uv_scaled.x;
-	float y = tonemap(vec3(x)).x;
-
-	if (abs(uv_scaled.x - 1.0) < 0.001 * scale) scene_color = vec3(1.0, 0.0, 0.0);
-	if (abs(uv_scaled.y - 1.0) < 0.001 * scale) scene_color = vec3(1.0, 0.0, 0.0);
-	if (abs(uv_scaled.y - y) < 0.001 * scale) scene_color = vec3(1.0);
-#endif
 }

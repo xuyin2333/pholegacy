@@ -1,8 +1,8 @@
 /*
 --------------------------------------------------------------------------------
 
-  Photon Shader by SixthSurge
-  Modified by xuyin2333
+  Pholegacy by xuyin
+  Modified from Photon Shader, original author SixthSurge
 
   program/c0_vl:
   Calculate volumetric fog
@@ -68,11 +68,7 @@ void main() {
     uv = gl_MultiTexCoord0.xy;
 
     light_color = texelFetch(colortex4, ivec2(191, 0), 0).rgb;
-#if defined WORLD_OVERWORLD && defined SH_SKYLIGHT
-    ambient_color = texelFetch(colortex4, ivec2(191, 11), 0).rgb;
-#else
-    ambient_color = texelFetch(colortex4, ivec2(191, 1), 0).rgb;
-#endif
+ambient_color = texelFetch(colortex4, ivec2(191, 1), 0).rgb;
 
 #if defined WORLD_OVERWORLD
     fog_params = get_fog_parameters(get_weather());

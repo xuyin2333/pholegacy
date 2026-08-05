@@ -1,7 +1,8 @@
 /*
 --------------------------------------------------------------------------------
 
-  Photon Shader by SixthSurge
+  Pholegacy by xuyin
+  Modified from Photon Shader, original author SixthSurge
 
   program/d4a_generate_sky_sh.csh:
   Generate skylight SH using parallel reduction
@@ -100,7 +101,21 @@ void main() {
 #endif
     barrier();
 
-// Sum samples using parallel reduction (manually unrolled for Intel compatibility)
+// Sum samples using parallel reduction
+
+/*
+for (uint stride = sample_count / 2u; stride > 0u; stride /= 2u) {
+    if (i < stride) {
+        for (uint band = 0u; band < 9u; ++band) {
+            shared_memory[i][band] += shared_memory[i + stride][band];
+        }
+    }
+
+    barrier();
+}
+*/
+
+// Loop manually unrolled as Intel doesn't seem to like barrier() calls in loops
 #define PARALLEL_REDUCTION_ITER(STRIDE) \
     if (i < (STRIDE)) { \
         for (uint band = 0u; band < 9u; ++band) { \

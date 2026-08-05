@@ -1,7 +1,8 @@
 /*
 --------------------------------------------------------------------------------
 
-  Photon Shader by SixthSurge
+  Pholegacy by xuyin
+  Modified from Photon Shader, original author SixthSurge
 
   program/c4_taa_exposure:
   TAA and auto exposure
@@ -78,10 +79,12 @@ uniform vec2 taa_offset;
     1.0 // Increases ghosting but reduces flickering caused by aggressive
         // clipping
 
-// (needed by vertex stage for auto exposure)
+/*
+(needed by vertex stage for auto exposure)
 #if AUTO_EXPOSURE != AUTO_EXPOSURE_OFF
 const bool colortex0MipmapEnabled = true;
 #endif
+ */
 
 vec3 min_of(vec3 a, vec3 b, vec3 c, vec3 d, vec3 f) {
     return min(a, min(b, min(c, min(d, f))));
@@ -158,8 +161,8 @@ float get_flicker_reduction(
     vec3 min_offset = (history_color - min_color);
     vec3 max_offset = (max_color - history_color);
 
-    float distance_to_clip =
-        length(min(min_offset, max_offset)) * flicker_sensitivity * exposure;
+    float distance_to_clip
+        = length(min(min_offset, max_offset)) * flicker_sensitivity * exposure;
     return clamp01(distance_to_clip);
 }
 
@@ -216,8 +219,9 @@ vec3 neighborhood_clipping(
     // Variance clipping ("An Excursion in Temporal Supersampling")
     mat2x3 moments;
     moments[0] = (1.0 / 9.0) * (a + b + c + d + e + f + g + h + i);
-    moments[1] = (1.0 / 9.0) *
-        (a * a + b * b + c * c + d * d + e * e + f * f + g * g + h * h + i * i);
+    moments[1] = (1.0 / 9.0)
+        * (a * a + b * b + c * c + d * d + e * e + f * f + g * g + h * h
+           + i * i);
 
     // Strictness parameter, higher gamma => more temporally stable but more
     // ghosting
@@ -240,8 +244,8 @@ vec3 neighborhood_clipping(
     return history_color;
 }
 
-#if AUTO_EXPOSURE == AUTO_EXPOSURE_HISTOGRAM && \
-    DEBUG_VIEW == DEBUG_VIEW_HISTOGRAM
+#if AUTO_EXPOSURE == AUTO_EXPOSURE_HISTOGRAM \
+    && DEBUG_VIEW == DEBUG_VIEW_HISTOGRAM
 void draw_histogram(ivec2 texel) {
     const int width = 512;
     const int height = 256;
@@ -256,8 +260,8 @@ void draw_histogram(ivec2 texel) {
         int index = int(HISTOGRAM_BINS * coord.x);
         float threshold = coord.y;
 
-        result.rgb =
-            histogram_pdf[index >> 2][index & 3] > threshold ? black : white;
+        result.rgb
+            = histogram_pdf[index >> 2][index & 3] > threshold ? black : white;
 
         float median = max0(1.0 - abs(index - histogram_selected_bin));
         result.rgb = mix(result.rgb, red, median) / exposure;
@@ -287,17 +291,17 @@ void main() {
 
     bool hand = closest.z < hand_depth;
 
-    vec2 velocity =
-        closest.xy - reproject_scene_space(closest_scene, hand, is_lod).xy;
+    vec2 velocity
+        = closest.xy - reproject_scene_space(closest_scene, hand, is_lod).xy;
     vec2 previous_uv = uv - velocity;
 
-    vec3 history_color =
-        catmull_rom_filter_fast_rgb(colortex5, previous_uv, 0.6);
+    vec3 history_color
+        = catmull_rom_filter_fast_rgb(colortex5, previous_uv, 0.6);
     history_color = max0(history_color); // Eliminate NaNs in the history
 
     float pixel_age = texelFetch(colortex5, ivec2(previous_uv * view_res), 0).a;
-    pixel_age =
-        max0(pixel_age * float(clamp01(previous_uv) == previous_uv) + 1.0);
+    pixel_age
+        = max0(pixel_age * float(clamp01(previous_uv) == previous_uv) + 1.0);
 
     // Distance factor to favour responsiveness closer to the camera and image
     // stability further away
@@ -326,8 +330,8 @@ void main() {
     );
 #else
     // Temporal upscaling
-    vec2 pos = clamp01(uv + 0.5 * taa_offset * rcp(taau_render_scale)) *
-        taau_render_scale;
+    vec2 pos = clamp01(uv + 0.5 * taa_offset * rcp(taau_render_scale))
+        * taau_render_scale;
 
     float confidence; // Confidence-of-quality factor, see "A Survey of Temporal
                       // Antialiasing Techniques" section 5.1
@@ -347,8 +351,8 @@ void main() {
 
     bool history_clipped;
     history_color = rgb_to_ycocg(history_color);
-    history_color =
-        clip_aabb(history_color, min_color, max_color, history_clipped);
+    history_color
+        = clip_aabb(history_color, min_color, max_color, history_clipped);
     float flicker_reduction = history_clipped
         ? 0.0
         : get_flicker_reduction(history_color, min_color, max_color);
@@ -361,9 +365,9 @@ void main() {
     // Offcenter rejection from Jessie, which is originally by Zombye
     // Reduces blur in motion
     vec2 pixel_offset = 1.0 - abs(2.0 * fract(view_res * previous_uv) - 1.0);
-    float offcenter_rejection =
-        sqrt(pixel_offset.x * pixel_offset.y) * TAA_OFFCENTER_REJECTION +
-        (1.0 - TAA_OFFCENTER_REJECTION);
+    float offcenter_rejection
+        = sqrt(pixel_offset.x * pixel_offset.y) * TAA_OFFCENTER_REJECTION
+        + (1.0 - TAA_OFFCENTER_REJECTION);
 
     alpha = 1.0 - alpha;
     alpha *= offcenter_rejection;
@@ -383,10 +387,12 @@ void main() {
         result.a = exposure;
     }
 
-#if AUTO_EXPOSURE == AUTO_EXPOSURE_HISTOGRAM && \
-    DEBUG_VIEW == DEBUG_VIEW_HISTOGRAM
+#if AUTO_EXPOSURE == AUTO_EXPOSURE_HISTOGRAM \
+    && DEBUG_VIEW == DEBUG_VIEW_HISTOGRAM
     draw_histogram(texel);
 #endif
 
-    bloom_input = result.rgb;
+    // Bloom should use the current frame, not temporally accumulated history,
+    // otherwise very bright moving sky objects leave a soft bloom ghost.
+    bloom_input = texelFetch(colortex0, texel, 0).rgb;
 }

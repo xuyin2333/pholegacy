@@ -91,6 +91,17 @@ vec2 get_circular_ripple(vec2 coord) {
     return circles;
 }
 
+// 选择垂直表面上的 2D 坐标（沿墙面平面采样）
+vec2 get_wall_coord(vec3 world_pos, vec3 flat_normal) {
+    vec3 an = abs(flat_normal);
+    if (an.x >= an.y && an.x >= an.z) {
+        return world_pos.zy;  // 朝 X 的墙
+    } else if (an.z >= an.y) {
+        return world_pos.xy;  // 朝 Z 的墙
+    }
+    return world_pos.xz;  // 兜底（水平面）
+}
+
 float get_puddle_noise(vec3 world_pos, vec3 flat_normal, vec2 light_levels) {
     const float puddle_frequency = 0.012;
 
@@ -105,6 +116,44 @@ float get_puddle_noise(vec3 world_pos, vec3 flat_normal, vec2 light_levels) {
         * linear_step(14.0 / 15.0, 1.0, light_levels.y);
 
     return puddle;
+}
+
+// 墙面湿润度：垂直表面的湿润强度，含向下流痕调制
+// 返回 0-1，0 表示无湿润
+float get_wall_wetness(vec3 world_pos, vec3 flat_normal, vec2 light_levels) {
+    vec3 an = abs(flat_normal);
+
+    // 仅垂直表面（排除强朝上地面与强朝下天花板）
+    float verticality = 1.0 - linear_step(0.3, 0.7, an.y);
+    float not_ceiling = linear_step(-0.3, 0.0, flat_normal.y);
+
+    if (verticality < eps || not_ceiling < eps) return 0.0;
+
+    vec2 wall_coord = get_wall_coord(world_pos, flat_normal);
+
+    const float wet_frequency = 0.012;
+    float wet_noise = texture(noisetex, wall_coord * wet_frequency).w;
+
+    // 向下流痕：使用 .w 通道（低频 worley），水平/垂直方向均极低频
+    // 仅作为大尺度湿润带调制，避免引入小尺度细节导致分布密集
+    // wall_coord.y 对应 world Y（向下流），x 方向是墙面水平方向
+    float streak = texture(noisetex, vec2(wall_coord.x * 0.015, wall_coord.y * 0.008 + frameTimeCounter * 0.01)).w;
+    streak = smoothstep(0.45, 0.70, streak);
+
+    float wet_factor = cube(wetness);
+
+    float wet = wet_noise;
+    wet -= (1.0 - wet_factor) * 0.55;
+    wet = linear_step(0.15, 0.45, wet);
+
+    // 流痕仅在已湿润区域内做强度调制（不创建新的小斑块）
+    wet *= mix(0.75, 1.0, streak);
+    wet *= verticality * not_ceiling * biome_may_rain;
+
+    wet *= (1.0 - cube(light_levels.x))
+        * linear_step(14.0 / 15.0, 1.0, light_levels.y);
+
+    return clamp01(wet);
 }
 
 bool get_rain_puddles(
@@ -123,7 +172,7 @@ bool get_rain_puddles(
     return false;
 #endif
 
-    const float puddle_f0 = 0.12;
+    const float puddle_f0 = 0.18;
     const float puddle_roughness_min = 0.001;
 
     if (wetness < eps || biome_may_rain < eps
@@ -134,7 +183,35 @@ bool get_rain_puddles(
     float noise_val = get_puddle_noise(world_pos, flat_normal, light_levels);
 
     if (noise_val < eps * eps) {
-        return false;
+        // 地面无积水坑 —— 尝试墙面湿润效果
+        float wall_wet = get_wall_wetness(world_pos, flat_normal, light_levels);
+        if (wall_wet < eps) return false;
+
+        float wet_strength = wall_wet;
+        float damp = 1.0 - porosity * clamp01(wet_strength * 2.0);
+
+        // 湿润外观：变暗、降粗糙度、薄水膜 f0、增强 SSR
+        albedo *= mix(1.0, 0.75, wet_strength);
+        roughness = mix(roughness, 0.05, damp * wet_strength * 0.85);
+        f0 = max(f0, mix(f0, vec3(0.05), wet_strength * 0.55));
+        ssr_multiplier = max(ssr_multiplier, wet_strength * 0.6);
+
+        vec2 wall_coord = get_wall_coord(world_pos, flat_normal);
+        const float h = 0.1;
+        float dh0 = get_flow_height(wall_coord);
+        float dhx = get_flow_height(wall_coord + vec2(h, 0.0));
+        float dhz = get_flow_height(wall_coord + vec2(0.0, h));
+
+        vec2 drip_grad = (vec2(dhx, dhz) - dh0) / h;
+        drip_grad *= 0.006 * wet_strength * rainStrength;
+
+        // 墙面法线扰动：沿 world 水平方向叠加（地面 an.y≈1 时为 0，不影响地面）
+        vec3 an = abs(flat_normal);
+        vec3 streak_normal = normalize(flat_normal
+            + vec3(drip_grad.x, 0.0, drip_grad.y) * 0.5 * (1.0 - an.y));
+        normal = normalize(mix(normal, streak_normal, wet_strength * 0.4));
+
+        return true;
     }
 
     float damp = 1.0 - porosity * clamp01(noise_val * 2.0);
@@ -142,7 +219,7 @@ bool get_rain_puddles(
 
     f0 = max(f0, mix(f0, vec3(puddle_f0), puddle_strength));
     roughness = mix(roughness, puddle_roughness_min, damp * puddle_strength);
-    ssr_multiplier = max(ssr_multiplier, 0.8 * puddle_strength);
+    ssr_multiplier = max(ssr_multiplier, 1.0 * puddle_strength);
 
     float puddle_zone = linear_step(0.5, 0.75, noise_val);
 

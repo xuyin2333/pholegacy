@@ -16,8 +16,6 @@ screen.water                           = 水
 screen.post                            = 後處理
 screen.misc                            = 其他
 
-screen.mods                            = 模組選項
-
 screen.weather                         = 天氣 
 screen.colored_lights                  = 彩色光源設定
 screen.rp_settings                     = 資源包設定
@@ -33,9 +31,6 @@ screen.box                             = 選擇框
 screen.developer                       = 開發者選項
 
 screen.distant_horizons                = 遙遠地平線 
-screen.photonics                       = Photonics
-screen.photonics_sharp                 = 銳利設定
-screen.photonics_restir                = ReSTIR 設定
 
 screen.aurora                          = 極光
 screen.clouds                          = 雲
@@ -75,11 +70,11 @@ screen.nether_color                    = 基礎色彩
 screen.distance_view                   = 視野距離
 
 option.INFO                            = Pholegacy
-value.INFO.0                           = §eby xuyin2333
-value.INFO.1                           = §aby xuyin2333
-value.INFO.2                           = §bby xuyin2333
-value.INFO.3                           = §dby xuyin2333
-option.INFO.comment                    = 原始著色器由 §bSixthSurge§r 製作\n修改者: §axuyin2333
+value.INFO.0                           = §e作者: xuyin
+value.INFO.1                           = §a作者: xuyin
+value.INFO.2                           = §b作者: xuyin
+value.INFO.3                           = §d作者: xuyin
+option.INFO.comment                    = 原始著色器由 §bSixthSurge§r 製作，本光影修改自 Photon
 
 # World settings
 
@@ -91,10 +86,6 @@ option.SLANTED_RAIN                    = 斜雨
 option.SLANTED_RAIN.comment            = 斜向下落的雨滴，讓雨景更有氣氛
 option.RAIN_OPACITY                    = 雨滴透明度
 option.RAIN_OPACITY.comment            = 調整雨滴的透明度
-option.RAIN_SCALE_X                    = 雨滴水平縮放
-option.RAIN_SCALE_X.comment            = 雨滴紋理水平UV縮放. 值越大條紋越密集
-option.RAIN_SCALE_Y                    = 雨滴垂直縮放
-option.RAIN_SCALE_Y.comment            = 雨滴紋理垂直UV縮放. 值越大條紋越長
 option.SEA_LEVEL                       = 海平面高度
 option.SEA_LEVEL.comment               = 海面與地面的 Y 座標。\n\n-60.0:1.18 後超級平坦\n4.0:1.18 前超級平坦\n63.0:預設
 option.SNOW_OPACITY                    = 雪花透明度
@@ -125,8 +116,6 @@ option.WEATHER_WIND_VARIATION_SPEED        = 風速變化速率
 option.COLORED_LIGHTS                  = 有色光線
 option.COLORED_LIGHTS.comment          = 使用泛洪算法的多色方塊光線，需要 Iris 1.6+
 option.COLORED_LIGHTS_VANILLA_LIGHTMAP_CONTRIBUTION = 原版光照貼圖貢獻
-option.COLORED_LIGHTS_VANILLA_LIGHTMAP_CONTRIBUTION_FALLOFF         = 貢獻衰減
-option.COLORED_LIGHTS_VANILLA_LIGHTMAP_CONTRIBUTION_FALLOFF.comment = 更改原版光照貼圖的貢獻衰減方式.\n平方: 光源附近更亮, 但衰減更快.\n線性: 光照更柔和, 傳播更遠
 option.HANDHELD_LIGHTING               = 手持光源
 option.HANDHELD_LIGHTING.comment       = 手持物品會投射光源;若啟用有色光線，手持光源也會染色
 option.HANDHELD_LIGHTING_INTENSITY     = 手持光源強度
@@ -152,8 +141,6 @@ option.SHADOW_COLOR                    = 有色陰影
 option.SHADOW_COLOR.comment            = 半透明方塊投射染色陰影
 option.SHADOW_VPS                      = 可變半影
 option.SHADOW_VPS.comment              = 距離越遠陰影越柔和
-option.SHADOW_SSRT                     = SSRT 遠處陰影
-option.SHADOW_SSRT_STEPS               = SSRT 陰影步數
 option.shadowMapResolution             = 陰影解析度
 option.shadowDistance                  = 陰影範圍
 option.sunPathRotation                 = 太陽軌跡旋轉
@@ -224,16 +211,13 @@ option.BLOCKLIGHT_B                    = 方塊光藍色
 option.BLOCKLIGHT_I                    = 方塊光強度
 
 option.VOXEL_VOLUME_SIZE               = 體素體積尺寸
-option.VOXEL_VOLUME_SIZE.comment       = 調整彩色光照計算的體積大小。高度耗能，同時受陰影距離影響
+option.VOXEL_VOLUME_SIZE.comment       = 高度耗能，同時受陰影距離影響
 suffix.VOXEL_VOLUME_SIZE               = 公尺
 option.VOXEL_VOLUME_CENTER             = 體素體積中心
 option.VOXEL_VOLUME_CENTER.comment     = 「前方」:以玩家面前為中心，能看到更多
 
 value.VOXEL_VOLUME_CENTER.VOXEL_VOLUME_CENTER_AHEAD  = 前方
 value.VOXEL_VOLUME_CENTER.VOXEL_VOLUME_CENTER_PLAYER = 玩家
-
-value.COLORED_LIGHTS_VANILLA_LIGHTMAP_CONTRIBUTION_FALLOFF.COLORED_LIGHTS_VANILLA_LIGHTMAP_CONTRIBUTION_FALLOFF_SQUARED = 平方
-value.COLORED_LIGHTS_VANILLA_LIGHTMAP_CONTRIBUTION_FALLOFF.COLORED_LIGHTS_VANILLA_LIGHTMAP_CONTRIBUTION_FALLOFF_LINEAR  = 線性
 
 suffix.shadowMapResolution             = ²
 suffix.sunPathRotation                 = °
@@ -305,9 +289,9 @@ option.CLOUDS_CUMULUS_COVERAGE              = 覆蓋度
 option.CLOUDS_CUMULUS_SIZE                  = 大小
 option.CLOUDS_CUMULUS_DETAIL_STRENGTH       = 細節強度
 option.CLOUDS_CUMULUS_WIND_SPEED            = 風速
-suffix.CLOUDS_CUMULUS_WIND_SPEED            = 公尺/秒
+suffix.CLOUDS_CUMULUS_ALTITUDE              = 公尺/秒
 option.CLOUDS_CUMULUS_WIND_ANGLE            = 風向
-suffix.CLOUDS_CUMULUS_WIND_ANGLE            = °
+suffix.CLOUDS_CUMULUS_ALTITUDE              = 度
 option.CLOUDS_CUMULUS_PRECOMPUTE_LOCAL_COVERAGE         = 預先計算區域覆蓋
 option.CLOUDS_CUMULUS_PRECOMPUTE_LOCAL_COVERAGE.comment = 激進優化積雲覆蓋範圍;截圖時請先關閉
 
@@ -325,9 +309,9 @@ option.CLOUDS_ALTOCUMULUS_COVERAGE              = 覆蓋度
 option.CLOUDS_ALTOCUMULUS_SIZE                  = 大小
 option.CLOUDS_ALTOCUMULUS_DETAIL_STRENGTH       = 細節強度
 option.CLOUDS_ALTOCUMULUS_WIND_SPEED            = 風速
-suffix.CLOUDS_ALTOCUMULUS_WIND_SPEED            = 公尺/秒
+suffix.CLOUDS_ALTOCUMULUS_ALTITUDE              = 公尺/秒
 option.CLOUDS_ALTOCUMULUS_WIND_ANGLE            = 風向
-suffix.CLOUDS_ALTOCUMULUS_WIND_ANGLE            = °
+suffix.CLOUDS_ALTOCUMULUS_ALTITUDE              = °
 
 option.CLOUDS_CUMULUS_CONGESTUS                       = 暴積雲
 option.CLOUDS_CUMULUS_CONGESTUS.comment               = 巨量且遙遠的體素雲朵
@@ -343,9 +327,9 @@ option.CLOUDS_CUMULUS_CONGESTUS_COVERAGE              = 覆蓋度
 option.CLOUDS_CUMULUS_CONGESTUS_SIZE                  = 大小
 option.CLOUDS_CUMULUS_CONGESTUS_DETAIL_STRENGTH       = 細節強度
 option.CLOUDS_CUMULUS_CONGESTUS_WIND_SPEED            = 風速
-suffix.CLOUDS_CUMULUS_CONGESTUS_WIND_SPEED            = 公尺/秒
+suffix.CLOUDS_CUMULUS_CONGESTUS_ALTITUDE              = 公尺/秒
 option.CLOUDS_CUMULUS_CONGESTUS_WIND_ANGLE            = 風向
-suffix.CLOUDS_CUMULUS_CONGESTUS_WIND_ANGLE            = °
+suffix.CLOUDS_CUMULUS_CONGESTUS_ALTITUDE              = °
 
 option.CLOUDS_NOCTILUCENT              = 夜光雲
 
@@ -363,20 +347,6 @@ option.BLOCKY_CLOUDS_ROUNDNESS         = 圓潤度
 option.BLOCKY_CLOUDS_ROUNDNESS.comment = 調整雲邊緣圓潤度
 option.BLOCKY_CLOUDS_SHARPNESS         = 銳利度
 option.BLOCKY_CLOUDS_SHARPNESS.comment = 調整雲邊緣銳利度
-option.BLOCKY_CLOUDS_PRIMARY_STEPS       = 初步取樣步數
-option.BLOCKY_CLOUDS_LIGHTING_STEPS      = 照明取樣步數
-option.BLOCKY_CLOUDS_DENSITY             = 密度
-option.BLOCKY_CLOUDS_DENSITY.comment     = 調整雲層密度，數值越高雜訊越多
-option.BLOCKY_CLOUDS_BRIGHTNESS          = 亮度
-option.BLOCKY_CLOUDS_BOTTOMLIGHT         = 底部亮度
-option.BLOCKY_CLOUDS_BOTTOMLIGHT.comment = 增加雲層底部的亮度
-option.BLOCKY_CLOUDS_SIZE                = 大小
-option.BLOCKY_CLOUDS_ATMOSPHERIC_SCATTERING         = 大氣散射
-option.BLOCKY_CLOUDS_ATMOSPHERIC_SCATTERING.comment = 啟用後會使雲層略微偏紅，效果隨距離增加而增強
-option.BLOCKY_CLOUDS_WIND_SPEED          = 風速
-suffix.BLOCKY_CLOUDS_WIND_SPEED          = 公尺/秒
-option.BLOCKY_CLOUDS_WIND_ANGLE          = 風向
-suffix.BLOCKY_CLOUDS_WIND_ANGLE          = °
 
 option.CLOUDS_TEMPORAL_UPSCALING       = 時域升頻
 option.CLOUDS_AERIAL_PERSPECTIVE_BOOST = 空氣透視強化
@@ -401,9 +371,9 @@ option.CLOUDS_CIRRUS_SIZE                  = 卷雲大小
 option.CLOUDS_CIRRUS_DETAIL_STRENGTH       = 卷雲細節強度
 option.CLOUDS_CIRRUS_CURL_STRENGTH         = 卷雲捲曲強度
 option.CLOUDS_CIRRUS_WIND_SPEED            = 風速
-suffix.CLOUDS_CIRRUS_WIND_SPEED            = 公尺/秒
+suffix.CLOUDS_CIRRUS_ALTITUDE              = 公尺/秒
 option.CLOUDS_CIRRUS_WIND_ANGLE            = 風向
-suffix.CLOUDS_CIRRUS_WIND_ANGLE            = °
+suffix.CLOUDS_CIRRUS_ALTITUDE              = °
 option.CLOUDS_CIRROCUMULUS_DENSITY         = 高積雲密度
 option.CLOUDS_CIRROCUMULUS_COVERAGE        = 高積雲覆蓋度
 option.CLOUDS_CIRROCUMULUS_SIZE            = 高積雲大小
@@ -625,11 +595,6 @@ option.BLOOM                           = 泛光效果
 option.BLOOM.comment                   = 在高亮區域與光源周圍產生柔和的「光暈」
 option.BLOOM_INTENSITY                 = 泛光強度
 option.BLOOM_INTENSITY.comment         = 調整光暈對最終畫面的影響程度
-option.BLOOM_SPREAD                    = 泛光擴散範圍
-option.BLOOM_SPREAD.comment            = 調整泛光擴散的範圍
-option.BLOOM_UPSAMPLING_FILTER         = 泛光升採樣過濾器
-value.BLOOM_UPSAMPLING_FILTER.texture  = 雙線性
-value.BLOOM_UPSAMPLING_FILTER.bicubic_filter = 雙三次
 option.DOF                             = 景深
 option.DOF.comment                     = 相機對焦效果—模糊失焦區域
 option.DOF_INTENSITY                   = 景深強度
@@ -664,9 +629,15 @@ value.DOF_FOCUS.-1.0                   = 自動
 option.tonemap                         = 色調映射演算法
 
 value.tonemap.tonemap_aces_fit         = ACES Fit
-value.tonemap.tonemap_agx             = AgX
+value.tonemap.tonemap_aces_full        = ACES Full
+value.tonemap.tonemap_hejl_2015        = Hejl 2015
+value.tonemap.tonemap_hejl_burgess     = Hejl-Burgess
 value.tonemap.tonemap_lottes           = Lottes
 value.tonemap.tonemap_uncharted_2      = Uncharted 2
+value.tonemap.tonemap_tech             = Tech
+value.tonemap.tonemap_ozius            = Ozius
+value.tonemap.tonemap_reinhard         = Reinhard
+value.tonemap.tonemap_reinhard_jodie   = Reinhard-Jodie
 
 # Color Grading
 
@@ -721,7 +692,7 @@ option.CUSTOM_SKY_BRIGHTNESS           = 自訂天空亮度
 option.CUSTOM_SKY_BRIGHTNESS.comment   = 調整自訂天空亮度
 option.ENCHANTMENT_GLINT_BRIGHTNESS    = 附魔光澤亮度
 option.DITHERED_TRANSLUCENCY_FALLBACK  = 交錯半透明備援
-option.DITHERED_TRANSLUCENCY_FALLBACK.comment = 以交錯方式繪製半透明物，改善部分無法正常渲染的場景 
+comment.DITHERED_TRANSLUCENCY_FALLBACK = 以交錯方式繪製半透明物，改善部分無法正常渲染的場景 
 
 value.DEBUG_VIEW.DEBUG_VIEW_NONE       = 關閉
 value.DEBUG_VIEW.DEBUG_VIEW_SAMPLER    = 取樣
@@ -729,12 +700,26 @@ value.DEBUG_VIEW.DEBUG_VIEW_HISTOGRAM  = 直方圖
 value.DEBUG_VIEW.DEBUG_VIEW_WEATHER    = 天氣
 
 value.tonemap_left.tonemap_aces_fit       = ACES Fit
+value.tonemap_left.tonemap_aces_full      = ACES Full
 value.tonemap_left.tonemap_lottes         = Lottes
+value.tonemap_left.tonemap_hejl_2015      = Hejl 2015
+value.tonemap_left.tonemap_hejl_burgess   = Hejl-Burgess
 value.tonemap_left.tonemap_uncharted_2    = Uncharted 2
+value.tonemap_left.tonemap_tech           = Tech
+value.tonemap_left.tonemap_ozius          = Ozius
+value.tonemap_left.tonemap_reinhard       = Reinhard
+value.tonemap_left.tonemap_reinhard_jodie = Reinhard-Jodie
 
 value.tonemap_right.tonemap_aces_fit       = ACES Fit
+value.tonemap_right.tonemap_aces_full      = ACES Full
 value.tonemap_right.tonemap_lottes         = Lottes
+value.tonemap_right.tonemap_hejl_burgess   = Hejl-Burgess
+value.tonemap_right.tonemap_hejl_2015      = Hejl 2015
 value.tonemap_right.tonemap_uncharted_2    = Uncharted 2
+value.tonemap_right.tonemap_tech           = Tech
+value.tonemap_right.tonemap_ozius          = Ozius
+value.tonemap_right.tonemap_reinhard       = Reinhard
+value.tonemap_right.tonemap_reinhard_jodie = Reinhard-Jodie
 
 # Distance View 
 
@@ -765,40 +750,3 @@ option.BOX_LINE_WIDTH           = 線寬
 option.DH_OVERDRAW_DISTANCE    = 過繪距離
 option.DH_OVERDRAW_FADE_LENGTH = 過繪淡出長度
 option.NOISE_ON_DH_TERRAIN     = 地平線地形雜訊
-
-# Photonics
-
-option.PHOTONICS_ENABLED              = 啟用 Photonics
-option.PHOTONICS_LIGHTING_MODE        = 光照模式
-option.PHOTONICS_LIGHTING_MODE.comment = Photonics 用於光照的光照算法.\n\n銳利 - 一種非常簡單的光照算法，無雜訊，但光源數量有限（最大取樣數）\nReSTIR - 使用 ReSTIR 進行光照，支援無限數量（最大光源數）的光源，但在某些區域可能會有雜訊.
-value.PHOTONICS_LIGHTING_MODE.SIMPLE  = 銳利
-value.PHOTONICS_LIGHTING_MODE.RESTIR  = ReSTIR
-option.PHOTONICS_ALPHA_MODE           = 透明度模式
-option.PHOTONICS_ALPHA_MODE.comment   = 更改 Photonics 處理透明體素的方式.\n\n不透明 - 將透明體素視為不透明\n逐方塊 - 使用第一個透明體素，然後跳過方塊的其餘部分\n逐體素 - 使用方塊中的每個透明體素（極大效能影響）
-value.PHOTONICS_ALPHA_MODE.NONE       = 不透明
-value.PHOTONICS_ALPHA_MODE.BLOCK      = 逐方塊
-value.PHOTONICS_ALPHA_MODE.VOXEL      = 逐體素
-option.PHOTONICS_MAX_LIGHTS           = 最大光源數
-option.PHOTONICS_MAX_LIGHTS.comment   = 可載入的最大追蹤光源數量.
-option.PHOTONICS_GLINT_STRENGTH       = 附魔光澤強度
-option.PHOTONICS_GLINT_STRENGTH.comment = 手持光源中附魔物品的強度.
-value.PHOTONICS_GLINT_STRENGTH.0      = 關閉
-option.PHOTONICS_TWO_HANDHELD_RAYS    = 分離手持光源
-option.PHOTONICS_TWO_HANDHELD_RAYS.comment = 兩個手持光源是否都應該投射陰影。停用後只會投射一個陰影.
-option.PHOTONICS_SHARP_MAX_SAMPLES    = 最大取樣數
-option.PHOTONICS_RESTIR_INITIAL_SAMPLES   = 初始取樣數
-option.PHOTONICS_RESTIR_SPR_SAMPLES       = 空間復用取樣數
-value.PHOTONICS_RESTIR_SPR_SAMPLES.0      = 關閉
-option.PHOTONICS_RESTIR_SPR_RADIUS        = 空間復用半徑
-option.PHOTONICS_RESTIR_ACCUMULATION      = 累積幀數
-option.PHOTONICS_RESTIR_ACCUMULATION.comment = ReSTIR 用於累積的最大幀數。較低的值會使光照響應更靈敏，但會增加雜訊.
-option.PHOTONICS_RESTIR_DENOISER_PASSES   = 去噪通道數
-option.PHOTONICS_RESTIR_SOFT_SHADOWS      = 柔和陰影
-option.PHOTONICS_RESTIR_COMBINED_GI       = 包含天空光 GI
-option.PHOTONICS_RESTIR_COMBINED_GI.comment = GI 是否應該通過 ReSTIR 的去噪器而不是常規路徑運行。\n結果會得到更銳利的 GI，但需要犧牲效能.
-
-# Additional Comments
-
-option.SHADOW_SSRT.comment             = 遠處物體的陰影是否使用螢幕空間光線追蹤 (SSRT).
-option.BLOCK_ENTITY_SHADOWS.comment    = 決定方塊實體是否能投射陰影。在生存世界中有大量箱子時請停用本選項來提升效能.
-option.BOX_LINE_WIDTH.comment          = 選取框的線寬.

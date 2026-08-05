@@ -14,15 +14,22 @@ const float blocky_clouds_altitude_l0 = BLOCKY_CLOUDS_ALTITUDE;
 const float blocky_clouds_altitude_l1 = BLOCKY_CLOUDS_ALTITUDE_2;
 const float blocky_clouds_thickness = BLOCKY_CLOUDS_THICKNESS;
 
+// Nostalgia-inspired: high albedo, lower extinction for translucent clouds
+const float blocky_clouds_albedo = 0.93;
+
 float blocky_clouds_extinction_coeff
-    = mix(0.66, 1.0, smoothstep(0.0, 0.3, abs(sun_dir.y)));
-float blocky_clouds_scattering_coeff = blocky_clouds_extinction_coeff;
+    = mix(0.35, 0.55, smoothstep(0.0, 0.3, max(sun_dir.y, moon_dir.y)));
+float blocky_clouds_scattering_coeff
+    = blocky_clouds_albedo * blocky_clouds_extinction_coeff;
 
 float blocky_clouds_phase_single(
     float cos_theta
 ) { // Single scattering phase function
-    return 0.7 * klein_nishina_phase(cos_theta, 2600.0) // forwards lobe
-        + 0.3 * henyey_greenstein_phase(cos_theta, -0.2); // backwards lobe
+    // Nostalgia-like blend: strong forward lobe, visible backward lobe,
+    // and a corona peak for soft silver-lining / translucency
+    return 0.70 * henyey_greenstein_phase(cos_theta, 0.55) // forwards lobe
+        + 0.20 * henyey_greenstein_phase(cos_theta, -0.35) // backwards lobe
+        + 0.10 * cornette_shanks_phase(cos_theta, 0.85); // corona peak
 }
 
 float blocky_clouds_phase_multi(
@@ -69,9 +76,9 @@ float blocky_clouds_density(
         = BLOCKY_CLOUDS_WIND_SPEED * vec2(cos(wind_angle), sin(wind_angle));
 
     const float roundness
-        = 0.5 * BLOCKY_CLOUDS_ROUNDNESS;
+        = 0.5 * BLOCKY_CLOUDS_ROUNDNESS; // Controls the roundness of the clouds
     const float sharpness = 0.5
-        * BLOCKY_CLOUDS_SHARPNESS;
+        * BLOCKY_CLOUDS_SHARPNESS; // Controls the sharpness of the cloud edges
 
     // Adjust position
 
@@ -147,13 +154,18 @@ vec2 blocky_clouds_scattering(
     float scatter_amount = blocky_clouds_scattering_coeff;
     float extinct_amount = blocky_clouds_extinction_coeff;
 
-    float powder = 2.0 * (1.0 - exp2(-8.0 * density));
+    // Stronger powder term for brighter, more translucent edges
+    float powder = 3.0 * (1.0 - exp2(-5.0 * density));
 
     float scattering_integral_times_density
         = (1.0 - step_transmittance) / blocky_clouds_extinction_coeff;
 
     float phase = blocky_clouds_phase_single(cos_theta);
-    vec3 phase_g = pow(vec3(0.6, 0.9, 0.3), vec3(1.0 + light_optical_depth));
+    float step_optical_depth = -log(step_transmittance);
+    vec3 phase_g = pow(
+        vec3(0.5, 0.35, 0.9),
+        vec3(1.0 + light_optical_depth + step_optical_depth)
+    );
 
     for (uint i = 0u; i < 8u; ++i) {
         scattering.x += scatter_amount
@@ -179,7 +191,8 @@ vec4 raymarch_blocky_clouds(
     vec3 world_end_pos,
     bool sky,
     float layer_altitude,
-    float dither
+    float dither,
+    vec3 sky_color
 ) {
     const uint primary_steps = BLOCKY_CLOUDS_PRIMARY_STEPS;
     const uint lighting_steps = BLOCKY_CLOUDS_LIGHTING_STEPS;
@@ -252,18 +265,23 @@ vec4 raymarch_blocky_clouds(
 
     vec3 light_color = moonlit ? moon_color : sun_color;
     light_color *= atmosphere_transmittance(light_dir.y, planet_radius + 1e3);
-    light_color *= 1.5 - 0.5 * smoothstep(0.0, 0.15, abs(sun_dir.y));
+    light_color *= 1.5 - 0.5 * smoothstep(0.0, 0.15, abs(light_dir.y));
     light_color *= 1.0 - rainStrength;
 
     float cos_theta = dot(world_dir, light_dir);
     float bounced_light = BLOCKY_CLOUDS_BOTTOMLIGHT;
 
-    mat2x3 light_colors = mat2x3(light_color, ambient_color);
+    // Nostalgia-like: use view-direction sky color for ambient scattering
+    // (instead of the flat frame-constant ambient_color), so clouds match
+    // the sky they are composited against at every angle
+    float ambient_boost = mix(1.7, 1.0, smoothstep(-0.1, 0.1, sun_dir.y));
+    mat2x3 light_colors = mat2x3(light_color, sky_color * ambient_boost);
 
     float distance_sum = 0.0;
     float distance_weight_sum = 0.0;
 
 #ifdef BLOCKY_CLOUDS_LAYER_2
+    // Offset upper layer so it isn't identical to the below
     float layer_offset
         = abs(layer_altitude - blocky_clouds_altitude_l1) < 0.5 ? 3000.0 : 0.0;
     bool is_rotated = layer_offset > 0.0;
@@ -319,7 +337,7 @@ vec4 raymarch_blocky_clouds(
                    cos_theta,
                    bounced_light
             )
-            * transmittance * mix(0.8, 1.25, cubic_smooth(altitude_fraction));
+            * transmittance * mix(0.7, 1.35, cubic_smooth(altitude_fraction));
 
         transmittance *= step_transmittance;
 
@@ -338,12 +356,7 @@ vec4 raymarch_blocky_clouds(
         ? 1.0
         : exp(-0.002 * distance_sum / distance_weight_sum);
 
-#ifdef BLOCKY_CLOUDS_ATMOSPHERIC_SCATTERING
-    scattering
-        *= distance_fade * mix(vec3(1.0, 0.66, 0.50), vec3(1.0), distance_fade);
-#else
     scattering *= distance_fade;
-#endif
     scattering *= BLOCKY_CLOUDS_BRIGHTNESS;
 
     transmittance = mix(1.0, transmittance, distance_fade);

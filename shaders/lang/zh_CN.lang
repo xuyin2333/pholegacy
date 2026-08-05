@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿# Profiles
+# Profiles
 
 profile.low                            = §e低
 profile.medium                         = §a中
@@ -16,8 +16,6 @@ screen.water                           = 水
 screen.post                            = 后处理
 screen.misc                            = 杂项
 
-screen.mods                            = 模组选项
-
 screen.weather                         = 天气变化
 screen.colored_lights                  = 彩色光源设置
 screen.rp_settings                     = 资源包设置
@@ -26,6 +24,7 @@ screen.refraction                      = 折射
 screen.light_sources                   = 光源
 screen.shadows                         = 阴影
 screen.ao                              = 环境光遮蔽
+screen.gi                              = 全局光照
 screen.color_grading                   = 颜色分级
 screen.exposure                        = 曝光
 screen.lpv_vl                          = 彩色光源雾气散射
@@ -33,9 +32,6 @@ screen.box                             = 选择框
 screen.developer                       = 开发者选项
 
 screen.distant_horizons                = Distant Horizons
-screen.photonics                       = Photonics
-screen.photonics_sharp                 = 锐利设置
-screen.photonics_restir                = ReSTIR 设置
 
 screen.aurora                          = 极光
 screen.clouds                          = 云层
@@ -75,11 +71,11 @@ screen.nether_color                    = 下界基础颜色
 screen.distance_view                   = 距离视图
 
 option.INFO                            = Pholegacy
-value.INFO.0                           = §eby xuyin2333
-value.INFO.1                           = §aby xuyin2333
-value.INFO.2                           = §bby xuyin2333
-value.INFO.3                           = §dby xuyin2333
-option.INFO.comment                    = 原始着色器由 §bSixthSurge§r 制作\n修改者: §axuyin2333
+value.INFO.0                           = §e作者: xuyin
+value.INFO.1                           = §a作者: xuyin
+value.INFO.2                           = §b作者: xuyin
+value.INFO.3                           = §d作者: xuyin
+option.INFO.comment                    = 原始着色器由 §bSixthSurge§r 制作，本光影修改自 Photon
 
 # World settings
 
@@ -91,10 +87,10 @@ option.SLANTED_RAIN                    = 风吹斜的雨
 option.SLANTED_RAIN.comment            = 倾斜的降雨粒子. 使雨天更具氛围.
 option.RAIN_OPACITY                    = 雨水不透明度
 option.RAIN_OPACITY.comment            = 调节雨水粒子的不透明度.
-option.RAIN_SCALE_X                    = 雨滴水平缩放
-option.RAIN_SCALE_X.comment            = 雨滴纹理水平UV缩放. 值越大条纹越密集
-option.RAIN_SCALE_Y                    = 雨滴垂直缩放
-option.RAIN_SCALE_Y.comment            = 雨滴纹理垂直UV缩放. 值越大条纹越长
+option.RAIN_SCALE_X                    = 雨水水平缩放
+option.RAIN_SCALE_X.comment            = 调节雨水纹理在水平方向上的平铺缩放.
+option.RAIN_SCALE_Y                    = 雨水垂直缩放
+option.RAIN_SCALE_Y.comment            = 调节雨水纹理在垂直方向上的平铺缩放.
 option.SEA_LEVEL                       = 海平面
 option.SEA_LEVEL.comment               = 海平面或地面的 Y 轴坐标. -60 = 1.18+ 的超平坦. 4 = 1.18- 的超平坦. 63 = 普通世界.
 option.SNOW_OPACITY                    = 雪不透明度
@@ -125,8 +121,6 @@ option.WEATHER_WIND_VARIATION_SPEED        = 风度偏差变化速度
 option.COLORED_LIGHTS                  = 彩色光源
 option.COLORED_LIGHTS.comment          = 使用泛洪填充(flood fill)算法实现可变彩色光源. 需要 Iris 1.6.0 或更高版本.
 option.COLORED_LIGHTS_VANILLA_LIGHTMAP_CONTRIBUTION = 原版光照贴图贡献
-option.COLORED_LIGHTS_VANILLA_LIGHTMAP_CONTRIBUTION_FALLOFF         = 贡献衰减
-option.COLORED_LIGHTS_VANILLA_LIGHTMAP_CONTRIBUTION_FALLOFF.comment = 更改原版光照贴图的贡献衰减方式.\n平方: 光源附近更亮, 但衰减更快.\n线性: 光照更柔和, 传播更远
 option.HANDHELD_LIGHTING               = 手持光源
 option.HANDHELD_LIGHTING.comment       = 可在世界投射光线的手持光源物品. 如果启用了彩色光源, 则手持光源也会投射近似于它们照明颜色的光照.
 option.HANDHELD_LIGHTING_INTENSITY     = 手持光源强度
@@ -173,6 +167,7 @@ option.SHADER_AO.comment               = 选择环境光遮蔽的算法类型. �
 value.SHADER_AO.SHADER_AO_NONE         = 关
 value.SHADER_AO.SHADER_AO_SSAO         = SSAO
 value.SHADER_AO.SHADER_AO_GTAO         = GTAO
+value.SHADER_AO.SHADER_AO_VBIL         = VBIL
 option.VANILLA_AO                      = 原版环境光遮蔽
 option.VANILLA_AO.comment              = 我的世界内置的环境光遮蔽.
 option.SSAO_RADIUS                     = SSAO 半径
@@ -185,6 +180,14 @@ option.GTAO_SLICES                     = GTAO 切面数
 option.GTAO_SLICES.comment             = 控制 GTAO 噪点明显程度.
 option.GTAO_HORIZON_STEPS              = GTAO 水平线采样数
 option.GTAO_HORIZON_STEPS.comment      = 控制 GTAO 的精确度.
+option.VBIL_SLICES                     = VBIL 切面数
+option.VBIL_SLICES.comment             = 控制 VBIL 的切面数量. 更多切面减少噪点但增加性能开销.
+option.VBIL_STEPS                      = VBIL 步数
+option.VBIL_STEPS.comment              = 控制 VBIL 每条射线的采样步数. 更多步数提高精度但增加性能开销.
+option.VBIL_RADIUS                     = VBIL 半径
+option.VBIL_RADIUS.comment             = 控制 VBIL 的采样半径 - 间接光照的追踪范围.
+option.VBIL_GI_I                       = VBIL 间接光照强度
+option.VBIL_GI_I.comment               = 控制 VBIL 间接弹射全局光照的强度.
 
 option.SUN_NR                          = 阳光 - 正午 - 红色
 option.SUN_NG                          = 阳光 - 正午 - 绿色
@@ -226,16 +229,13 @@ option.LIGHTMAP_MIX_I                  = 光照贴图混合强度
 option.LIGHTMAP_MIX_I.comment          = 控制原版光照贴图（方块光/天空光）在最终光照中的混合比例.\n降低可减弱原版光照的覆盖, 让 LPV 彩色光或 VBIL GI 主导; 升高则让原版光照更明显.\n同时影响 LPV 彩色光在最终渲染中的强度
 
 option.VOXEL_VOLUME_SIZE               = 体素化大小
-option.VOXEL_VOLUME_SIZE.comment       = 调整彩色光照计算的体积大小. 高性能影响, 同时也受阴影距离影响.
+option.VOXEL_VOLUME_SIZE.comment       = 高性能影响, 同时也受阴影距离影响.
 suffix.VOXEL_VOLUME_SIZE               = m
 option.VOXEL_VOLUME_CENTER             = 体素化中心位置
 option.VOXEL_VOLUME_CENTER.comment     = 前置: 使体素化中心位置设定在玩家的前方, 意味着更多位于前方的事物可被体素化追踪到数据. 以玩家为中心: 体素化中心位置即是玩家所在位置.
 
 value.VOXEL_VOLUME_CENTER.VOXEL_VOLUME_CENTER_AHEAD  = 前置
 value.VOXEL_VOLUME_CENTER.VOXEL_VOLUME_CENTER_PLAYER = 以玩家为中心
-
-value.COLORED_LIGHTS_VANILLA_LIGHTMAP_CONTRIBUTION_FALLOFF.COLORED_LIGHTS_VANILLA_LIGHTMAP_CONTRIBUTION_FALLOFF_SQUARED = 平方
-value.COLORED_LIGHTS_VANILLA_LIGHTMAP_CONTRIBUTION_FALLOFF.COLORED_LIGHTS_VANILLA_LIGHTMAP_CONTRIBUTION_FALLOFF_LINEAR  = 线性
 
 suffix.shadowMapResolution             = ²
 suffix.sunPathRotation                 = °
@@ -365,20 +365,6 @@ option.BLOCKY_CLOUDS_ROUNDNESS         = 云层形状圆润程度
 option.BLOCKY_CLOUDS_ROUNDNESS.comment = 调节方块云层整体形状的圆润程度.
 option.BLOCKY_CLOUDS_SHARPNESS         = 云层边缘锐利程度
 option.BLOCKY_CLOUDS_SHARPNESS.comment = 调节方块云层边缘的锐利程度.
-option.BLOCKY_CLOUDS_PRIMARY_STEPS       = 初步采样数
-option.BLOCKY_CLOUDS_LIGHTING_STEPS      = 照明采样数
-option.BLOCKY_CLOUDS_DENSITY             = 浓度
-option.BLOCKY_CLOUDS_DENSITY.comment     = 调节云层浓度. 值越高噪点越多.
-option.BLOCKY_CLOUDS_BRIGHTNESS          = 亮度
-option.BLOCKY_CLOUDS_BOTTOMLIGHT         = 底部亮度
-option.BLOCKY_CLOUDS_BOTTOMLIGHT.comment = 增加云层底部的亮度.
-option.BLOCKY_CLOUDS_SIZE                = 尺寸
-option.BLOCKY_CLOUDS_ATMOSPHERIC_SCATTERING         = 大气散射
-option.BLOCKY_CLOUDS_ATMOSPHERIC_SCATTERING.comment = 启用后, 会使云层略微变红. 效果随距离增加而增强.
-option.BLOCKY_CLOUDS_WIND_SPEED          = 风速
-suffix.BLOCKY_CLOUDS_WIND_SPEED          = m/s
-option.BLOCKY_CLOUDS_WIND_ANGLE          = 风向角
-suffix.BLOCKY_CLOUDS_WIND_ANGLE          = °
 
 option.CLOUDS_TEMPORAL_UPSCALING       = 云层时间性升采样
 option.CLOUDS_AERIAL_PERSPECTIVE_BOOST = 空中云层透视增益
@@ -526,6 +512,8 @@ option.HARDCODED_SPECULAR              = 硬编码 高光
 option.HARDCODED_SPECULAR.comment      = 为某些方块硬编码高光反射(例如金属).
 option.HARDCODED_EMISSION              = 硬编码 发光
 option.HARDCODED_EMISSION.comment      = 为某些方块硬编码自发光(例如火把).
+option.HARDCODED_EMISSION_I            = 硬编码发光强度
+option.HARDCODED_EMISSION_I.comment    = 调整硬编码自发光的亮度.
 option.HARDCODED_SSS                   = 硬编码 次表面散射
 option.HARDCODED_SSS.comment           = 为某些方块硬编码次表面散射(例如树叶).
 option.RAIN_PUDDLES                    = 雨水坑
@@ -627,11 +615,6 @@ option.BLOOM                           = 泛光
 option.BLOOM.comment                   = 明亮区域和光源周围的柔和泛光效果.
 option.BLOOM_INTENSITY                 = 泛光强度
 option.BLOOM_INTENSITY.comment         = 调节泛光效果影响最终图像的强度.
-option.BLOOM_SPREAD                    = 泛光扩散范围
-option.BLOOM_SPREAD.comment            = 调节泛光扩散的范围.
-option.BLOOM_UPSAMPLING_FILTER         = 泛光升采样过滤器
-value.BLOOM_UPSAMPLING_FILTER.texture  = 双线性
-value.BLOOM_UPSAMPLING_FILTER.bicubic_filter = 双三次
 option.DOF                             = 景深
 option.DOF.comment                     = 镜头聚焦效果 - 模糊非聚焦区域.
 option.DOF_INTENSITY                   = 景深强度
@@ -666,9 +649,16 @@ value.DOF_FOCUS.-1.0                   = 自动
 option.tonemap                         = 色调操控
 
 value.tonemap.tonemap_aces_fit         = ACES Fit
-value.tonemap.tonemap_agx             = AgX
+value.tonemap.tonemap_aces_full        = ACES Full
+value.tonemap.tonemap_agx              = AgX
+value.tonemap.tonemap_hejl_2015        = Hejl 2015
+value.tonemap.tonemap_hejl_burgess     = Hejl-Burgess
 value.tonemap.tonemap_lottes           = Lottes
 value.tonemap.tonemap_uncharted_2      = Uncharted 2
+value.tonemap.tonemap_tech             = Tech
+value.tonemap.tonemap_ozius            = Ozius
+value.tonemap.tonemap_reinhard         = Reinhard
+value.tonemap.tonemap_reinhard_jodie   = Reinhard-Jodie
 
 # Color Grading
 
@@ -731,12 +721,28 @@ value.DEBUG_VIEW.DEBUG_VIEW_HISTOGRAM  = 柱状图
 value.DEBUG_VIEW.DEBUG_VIEW_WEATHER    = 天气
 
 value.tonemap_left.tonemap_aces_fit       = ACES Fit
+value.tonemap_left.tonemap_aces_full      = ACES Full
+value.tonemap_left.tonemap_agx            = AgX
 value.tonemap_left.tonemap_lottes         = Lottes
+value.tonemap_left.tonemap_hejl_2015      = Hejl 2015
+value.tonemap_left.tonemap_hejl_burgess   = Hejl-Burgess
 value.tonemap_left.tonemap_uncharted_2    = Uncharted 2
+value.tonemap_left.tonemap_tech           = Tech
+value.tonemap_left.tonemap_ozius          = Ozius
+value.tonemap_left.tonemap_reinhard       = Reinhard
+value.tonemap_left.tonemap_reinhard_jodie = Reinhard-Jodie
 
 value.tonemap_right.tonemap_aces_fit       = ACES Fit
+value.tonemap_right.tonemap_aces_full      = ACES Full
+value.tonemap_right.tonemap_agx            = AgX
 value.tonemap_right.tonemap_lottes         = Lottes
+value.tonemap_right.tonemap_hejl_burgess   = Hejl-Burgess
+value.tonemap_right.tonemap_hejl_2015      = Hejl 2015
 value.tonemap_right.tonemap_uncharted_2    = Uncharted 2
+value.tonemap_right.tonemap_tech           = Tech
+value.tonemap_right.tonemap_ozius          = Ozius
+value.tonemap_right.tonemap_reinhard       = Reinhard
+value.tonemap_right.tonemap_reinhard_jodie = Reinhard-Jodie
 
 # Distance View 
 
@@ -777,33 +783,92 @@ option.DH_OVERDRAW_DISTANCE    = DH 过度绘制距离
 option.DH_OVERDRAW_FADE_LENGTH = DH 过度绘制淡出长度
 option.NOISE_ON_DH_TERRAIN     = DH 地形噪声
 
+# Blocky Clouds
+
+option.BLOCKY_CLOUDS_ATMOSPHERIC_SCATTERING = 大气散射
+option.BLOCKY_CLOUDS_ATMOSPHERIC_SCATTERING.comment = 启用后会使云层略微偏红. 该效果会随距离增加.
+option.BLOCKY_CLOUDS_BOTTOMLIGHT          = 底部亮度
+option.BLOCKY_CLOUDS_BOTTOMLIGHT.comment  = 提高云层底部的亮度.
+option.BLOCKY_CLOUDS_BRIGHTNESS           = 亮度
+option.BLOCKY_CLOUDS_DENSITY              = 密度
+option.BLOCKY_CLOUDS_DENSITY.comment      = 调节云层密度. 数值越高噪声越多.
+option.BLOCKY_CLOUDS_LIGHTING_STEPS       = 光照步数
+option.BLOCKY_CLOUDS_PRIMARY_STEPS        = 主步数
+option.BLOCKY_CLOUDS_SIZE                 = 大小
+option.BLOCKY_CLOUDS_WIND_ANGLE           = 风向角
+option.BLOCKY_CLOUDS_WIND_SPEED           = 风速
+suffix.BLOCKY_CLOUDS_ALTITUDE             = m
+suffix.BLOCKY_CLOUDS_ALTITUDE_2           = m
+suffix.BLOCKY_CLOUDS_WIND_ANGLE           = °
+suffix.BLOCKY_CLOUDS_WIND_SPEED           = m/s
+
+# Bloom
+
+option.BLOOM_SPREAD                       = 泛光扩散
+option.BLOOM_SPREAD.comment               = 调节泛光向外扩散的程度.
+option.BLOOM_UPSAMPLING_FILTER            = 泛光上采样滤镜
+value.BLOOM_UPSAMPLING_FILTER.bicubic_filter = 双三次
+value.BLOOM_UPSAMPLING_FILTER.texture     = 双线性
+
+# Colored Lights
+
+option.COLORED_LIGHTS_VANILLA_LIGHTMAP_CONTRIBUTION_FALLOFF = 贡献衰减
+option.COLORED_LIGHTS_VANILLA_LIGHTMAP_CONTRIBUTION_FALLOFF.comment = 改变原版光照贴图贡献的衰减方式.\n平方: 光源处更亮且快速衰减.\n线性: 光照柔和且传播更远.
+value.COLORED_LIGHTS_VANILLA_LIGHTMAP_CONTRIBUTION_FALLOFF.COLORED_LIGHTS_VANILLA_LIGHTMAP_CONTRIBUTION_FALLOFF_LINEAR = 线性
+value.COLORED_LIGHTS_VANILLA_LIGHTMAP_CONTRIBUTION_FALLOFF.COLORED_LIGHTS_VANILLA_LIGHTMAP_CONTRIBUTION_FALLOFF_SQUARED = 平方
+
+# Vanilla AO
+
+option.VANILLA_AO_INTENSITY               = 原版环境光遮蔽强度
+option.VANILLA_AO_INTENSITY.comment       = 调节我的世界内置环境光遮蔽的强度.
+
+# Translucency
+
+comment.DITHERED_TRANSLUCENCY_FALLBACK    = 使用抖动半透明以改善那些在开启分离绘制实体时无法正常透明的对象外观.
+
+# Screens
+
+screen.mods                               = Mod 选项
+screen.photonics                          = Photonics
+screen.photonics_sharp                    = Sharp 设置
+screen.photonics_restir                   = ReSTIR 设置
+
 # Photonics
 
-option.PHOTONICS_ENABLED              = 启用 Photonics
-option.PHOTONICS_LIGHTING_MODE        = 光照模式
-option.PHOTONICS_LIGHTING_MODE.comment = Photonics 用于光照的光照算法.\n\n锐利 - 一种非常简单的光照算法，无噪点，但光源数量有限（最大采样数）\nReSTIR - 使用 ReSTIR 进行光照，支持无限数量（最大光源数）的光源，但在某些区域可能会有噪点.
-value.PHOTONICS_LIGHTING_MODE.SIMPLE  = 锐利
-value.PHOTONICS_LIGHTING_MODE.RESTIR  = ReSTIR
-option.PHOTONICS_ALPHA_MODE           = 透明度模式
-option.PHOTONICS_ALPHA_MODE.comment   = 更改 Photonics 处理透明体素的方式.\n\n不透明 - 将透明体素视为不透明\n逐方块 - 使用第一个透明体素，然后跳过方块的其余部分\n逐体素 - 使用方块中的每个透明体素（极大性能影响）
-value.PHOTONICS_ALPHA_MODE.NONE       = 不透明
-value.PHOTONICS_ALPHA_MODE.BLOCK      = 逐方块
-value.PHOTONICS_ALPHA_MODE.VOXEL      = 逐体素
-option.PHOTONICS_MAX_LIGHTS           = 最大光源数
-option.PHOTONICS_MAX_LIGHTS.comment   = 可加载的最大追踪光源数量.
-option.PHOTONICS_GLINT_STRENGTH       = 附魔闪光强度
-option.PHOTONICS_GLINT_STRENGTH.comment = 手持光源中附魔物品的强度.
-value.PHOTONICS_GLINT_STRENGTH.0      = 关闭
-option.PHOTONICS_TWO_HANDHELD_RAYS    = 分离手持光源
-option.PHOTONICS_TWO_HANDHELD_RAYS.comment = 两个手持光源是否都应该投射阴影。禁用后只会投射一个阴影.
-option.PHOTONICS_SHARP_MAX_SAMPLES    = 最大采样数
+option.PHOTONICS_ENABLED                  = 使用 Photonics
+option.PHOTONICS_LIGHTING_MODE            = 光照模式
+option.PHOTONICS_LIGHTING_MODE.comment    = Photonics 用于光照的算法.\n\nSharp - 非常简单的光照算法, 无噪声, 但光照数量有限 (最大采样数)\nReSTIR - 使用 ReSTIR 进行光照, 支持无限数量的光源 (最大光源数), 但在某些区域可能有噪声.
+option.PHOTONICS_ALPHA_MODE               = 透明度模式
+option.PHOTONICS_ALPHA_MODE.comment       = 改变 Photonics 处理透明体素的方式. \n\n不透明 - 将透明体素视为不透明\n逐方块 - 使用第一个透明体素, 然后跳过该方块的其余部分\n逐体素 - 使用方块中的每个透明体素 (严重影响性能)
+option.PHOTONICS_MAX_LIGHTS               = 最大光源数
+option.PHOTONICS_MAX_LIGHTS.comment       = 可以加载的追踪光源最大数量.
+option.PHOTONICS_GLINT_STRENGTH           = 附魔光效强度
+option.PHOTONICS_GLINT_STRENGTH.comment   = 手持光照中附魔物品的光效强度.
+option.PHOTONICS_TWO_HANDHELD_RAYS        = 分离手持光线
+option.PHOTONICS_TWO_HANDHELD_RAYS.comment = 是否让两个手持光源都投射阴影. 禁用时只投射一个阴影.
+option.PHOTONICS_SHARP_MAX_SAMPLES        = 最大采样数
 option.PHOTONICS_RESTIR_INITIAL_SAMPLES   = 初始采样数
 option.PHOTONICS_RESTIR_SPR_SAMPLES       = 空间复用采样数
-value.PHOTONICS_RESTIR_SPR_SAMPLES.0      = 关闭
 option.PHOTONICS_RESTIR_SPR_RADIUS        = 空间复用半径
 option.PHOTONICS_RESTIR_ACCUMULATION      = 累积帧数
-option.PHOTONICS_RESTIR_ACCUMULATION.comment = ReSTIR 用于累积的最大帧数。较低的值会使光照响应更灵敏，但会增加噪点.
-option.PHOTONICS_RESTIR_DENOISER_PASSES   = 去噪通道数
+option.PHOTONICS_RESTIR_ACCUMULATION.comment = ReSTIR 累积使用的最大帧数. 较低的值会使光照响应更快, 但噪声更多.
+option.PHOTONICS_RESTIR_DENOISER_PASSES   = 降噪器通道
 option.PHOTONICS_RESTIR_SOFT_SHADOWS      = 柔和阴影
 option.PHOTONICS_RESTIR_COMBINED_GI       = 包含天空光 GI
-option.PHOTONICS_RESTIR_COMBINED_GI.comment = GI 是否应该通过 ReSTIR 的去噪器而不是常规路径运行。\n结果会得到更锐利的 GI，但需要牺牲性能.
+option.PHOTONICS_RESTIR_COMBINED_GI.comment = 是否让 GI 通过 ReSTIR 的降噪器处理而不是常规路径. \n结果会使 GI 更锐利, 但消耗性能.
+value.PHOTONICS_LIGHTING_MODE.SIMPLE      = Sharp
+value.PHOTONICS_LIGHTING_MODE.RESTIR      = ReSTIR
+value.PHOTONICS_ALPHA_MODE.NONE           = 不透明
+value.PHOTONICS_ALPHA_MODE.BLOCK          = 逐方块
+value.PHOTONICS_ALPHA_MODE.VOXEL          = 逐体素
+value.PHOTONICS_GLINT_STRENGTH.0          = 关闭
+value.PHOTONICS_RESTIR_SPR_SAMPLES.0      = 关闭
+
+# Sky / Materials / Water
+
+option.BIOME_SKY                 = 群系天空
+option.BIOME_SKY_INTENSITY       = 群系天空强度
+option.HARDCODED_ORE             = 硬编码 发光矿物
+option.ORE_BRIGHTNESS            = 矿物发光
+option.COLORED_CANDLES           = 彩色蜡烛
+option.LEGACY_WAVES              = 旧版水波

@@ -25,6 +25,7 @@ screen.refraction                      = Refraction
 screen.light_sources                   = Light Sources
 screen.shadows                         = Shadows
 screen.ao                              = Ambient Occlusion
+screen.gi                              = Global Illumination
 screen.color_grading                   = Color Grading
 screen.exposure                        = Exposure
 screen.lpv_vl                          = Colored Lights Fog Scattering
@@ -74,11 +75,11 @@ screen.nether_color                    = Static Color
 screen.distance_view                   = Distance View
 
 option.INFO                            = Pholegacy
-value.INFO.0                           = §eby xuyin2333
-value.INFO.1                           = §aby xuyin2333
-value.INFO.2                           = §bby xuyin2333
-value.INFO.3                           = §dby xuyin2333
-option.INFO.comment                    = Original shader by §bSixthSurge§r\nModified by: §axuyin2333
+value.INFO.0                           = §eby xuyin
+value.INFO.1                           = §aby xuyin
+value.INFO.2                           = §bby xuyin
+value.INFO.3                           = §dby xuyin
+option.INFO.comment                    = Original shader by §bSixthSurge§r, modified from Photon Shader
 
 # World settings
 
@@ -91,9 +92,9 @@ option.SLANTED_RAIN.comment            = Slanted rain particles. Makes rainy wea
 option.RAIN_OPACITY                    = Rain Opacity
 option.RAIN_OPACITY.comment            = Adjust the opacity of rain particles
 option.RAIN_SCALE_X                    = Rain Scale X
-option.RAIN_SCALE_X.comment            = Horizontal UV scale for rain texture. Higher = more dense streaks
+option.RAIN_SCALE_X.comment            = Adjusts the horizontal tiling scale of the rain texture.
 option.RAIN_SCALE_Y                    = Rain Scale Y
-option.RAIN_SCALE_Y.comment            = Vertical UV scale for rain texture. Higher = longer streaks
+option.RAIN_SCALE_Y.comment            = Adjusts the vertical tiling scale of the rain texture.
 option.SEA_LEVEL                       = Sea Level
 option.SEA_LEVEL.comment               = The y coordinate of the sea/ground.\n\n-60.0: Superflat post-1.18.\n4.0: Superflat pre-1.18.\n63.0: Normal.
 option.SNOW_OPACITY                    = Snow Opacity
@@ -169,19 +170,29 @@ option.SHADER_AO.comment               = AO method used. Off - no shader AO. SSA
 value.SHADER_AO.SHADER_AO_NONE         = Off
 value.SHADER_AO.SHADER_AO_SSAO         = SSAO
 value.SHADER_AO.SHADER_AO_GTAO         = GTAO
-value.SHADER_AO.SHADER_AO_VBIL       = VBIL
+value.SHADER_AO.SHADER_AO_VBIL         = VBIL
 option.VANILLA_AO                      = Vanilla AO
 option.VANILLA_AO.comment              = Minecraft's built-in ambient occlusion
+option.VANILLA_AO_INTENSITY            = Vanilla AO Intensity
+option.VANILLA_AO_INTENSITY.comment    = Adjusts the intensity of minecraft's built in ambient occlusion
 option.SSAO_RADIUS                     = SSAO Radius
-option.SSAO_RADIUS.comment             = Adjusts the radius of SSAO - distance which objects can occlude each otherdistance which objects can occlude each other
+option.SSAO_RADIUS.comment             = Adjusts the radius of SSAO -  the distance from which objects can occlude each other
 option.SSAO_STEPS                      = SSAO Steps
 option.SSAO_STEPS.comment              = Controls how noisy the SSAO appears
 option.GTAO_RADIUS                     = GTAO Radius
-option.GTAO_RADIUS.comment             = Adjusts the radius of GTAO - distance which objects can occlude each otherdistance which objects can occlude each other
+option.GTAO_RADIUS.comment             = Adjusts the radius of GTAO - the distance from which objects can occlude each other
 option.GTAO_SLICES                     = GTAO Slices
 option.GTAO_SLICES.comment             = Controls how noisy the GTAO appears
 option.GTAO_HORIZON_STEPS              = GTAO Horizon Steps
-option.GTAO_HORIZON_STEPS.comment      = Controls the accuracy of GTAO
+option.GTAO_HORIZON_STEPS.comment      = Controls the accuracy of GTAO. A higher step count also increase the intensity of the effect
+option.VBIL_SLICES                     = VBIL Slices
+option.VBIL_SLICES.comment             = Number of slices for VBIL. More slices reduce noise but increase performance cost.
+option.VBIL_STEPS                      = VBIL Steps
+option.VBIL_STEPS.comment              = Number of steps per ray for VBIL. More steps improve accuracy but increase performance cost.
+option.VBIL_RADIUS                     = VBIL Radius
+option.VBIL_RADIUS.comment             = Sampling radius for VBIL - the range of indirect lighting tracing.
+option.VBIL_GI_I                       = VBIL GI Intensity
+option.VBIL_GI_I.comment               = Intensity of the VBIL indirect bounce global illumination.
 
 option.SUN_NR                          = §c▍ §fRed
 option.SUN_NG                          = §a▍ §fGreen
@@ -528,6 +539,8 @@ option.HARDCODED_SPECULAR              = Hardcoded Specular
 option.HARDCODED_SPECULAR.comment      = Hardcoded specular reflections for some blocks (eg metals)
 option.HARDCODED_EMISSION              = Hardcoded Emission
 option.HARDCODED_EMISSION.comment      = Hardcoded emission for some blocks (eg torches)
+option.HARDCODED_EMISSION_I            = Hardcoded Emission Intensity
+option.HARDCODED_EMISSION_I.comment    = Adjusts the brightness of hardcoded emission.
 option.HARDCODED_SSS                   = Hardcoded SSS
 option.HARDCODED_SSS.comment           = Hardcoded subsurface scattering for some blocks (eg leaves)
 option.RAIN_PUDDLES                    = Rain Puddles
@@ -668,9 +681,16 @@ value.DOF_FOCUS.-1.0                   = Automatic
 option.tonemap                         = Tonemap Operator
 
 value.tonemap.tonemap_aces_fit         = ACES Fit
-value.tonemap.tonemap_agx             = AgX
+value.tonemap.tonemap_aces_full        = ACES Full
+value.tonemap.tonemap_agx              = AgX
+value.tonemap.tonemap_hejl_2015        = Hejl 2015
+value.tonemap.tonemap_hejl_burgess     = Hejl-Burgess
 value.tonemap.tonemap_lottes           = Lottes
 value.tonemap.tonemap_uncharted_2      = Uncharted 2
+value.tonemap.tonemap_tech             = Tech
+value.tonemap.tonemap_ozius            = Ozius
+value.tonemap.tonemap_reinhard         = Reinhard
+value.tonemap.tonemap_reinhard_jodie   = Reinhard-Jodie
 
 # Color Grading
 
@@ -733,12 +753,28 @@ value.DEBUG_VIEW.DEBUG_VIEW_HISTOGRAM  = Histogram
 value.DEBUG_VIEW.DEBUG_VIEW_WEATHER    = Weather
 
 value.tonemap_left.tonemap_aces_fit       = ACES Fit
+value.tonemap_left.tonemap_aces_full      = ACES Full
+value.tonemap_left.tonemap_agx            = AgX
 value.tonemap_left.tonemap_lottes         = Lottes
+value.tonemap_left.tonemap_hejl_2015      = Hejl 2015
+value.tonemap_left.tonemap_hejl_burgess   = Hejl-Burgess
 value.tonemap_left.tonemap_uncharted_2    = Uncharted 2
+value.tonemap_left.tonemap_tech           = Tech
+value.tonemap_left.tonemap_ozius          = Ozius
+value.tonemap_left.tonemap_reinhard       = Reinhard
+value.tonemap_left.tonemap_reinhard_jodie = Reinhard-Jodie
 
 value.tonemap_right.tonemap_aces_fit       = ACES Fit
+value.tonemap_right.tonemap_aces_full      = ACES Full
+value.tonemap_right.tonemap_agx            = AgX
 value.tonemap_right.tonemap_lottes         = Lottes
+value.tonemap_right.tonemap_hejl_burgess   = Hejl-Burgess
+value.tonemap_right.tonemap_hejl_2015      = Hejl 2015
 value.tonemap_right.tonemap_uncharted_2    = Uncharted 2
+value.tonemap_right.tonemap_tech           = Tech
+value.tonemap_right.tonemap_ozius          = Ozius
+value.tonemap_right.tonemap_reinhard       = Reinhard
+value.tonemap_right.tonemap_reinhard_jodie = Reinhard-Jodie
 
 # Distance View 
 

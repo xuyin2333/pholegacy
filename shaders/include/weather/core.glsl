@@ -72,7 +72,7 @@ float weather_humidity() {
 
     // Weather-based variation
 
-    humidity += wetness;
+    humidity += 0.80 * wetness;
 
     // User adjustment
 
@@ -99,7 +99,7 @@ float weather_wind() {
 
     // Weather-based variation
 
-    wind += 0.33 * wetness;
+    wind += 0.25 * wetness;
 
     // User adjustment
 

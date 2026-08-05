@@ -1,8 +1,8 @@
 /*
 --------------------------------------------------------------------------------
 
-  Photon Shader by SixthSurge
-  Modified by xuyin2333
+  Pholegacy by xuyin
+  Modified from Photon Shader, original author SixthSurge
 
   program/d4_deferred_shading:
   Shade terrain and entities, draw sky
@@ -83,6 +83,7 @@ uniform float time_midnight;
 // ------------
 
 #define ATMOSPHERE_SCATTERING_LUT depthtex0
+#define WEATHER_AURORA
 
 #if defined WORLD_OVERWORLD
 #include "/include/lighting/colors/light_color.glsl"

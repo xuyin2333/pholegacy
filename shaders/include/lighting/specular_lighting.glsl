@@ -79,6 +79,7 @@ vec3 get_specular_highlight(
     float LoV,
     float LoH
 ) {
+    // Foliage materials should not have specular highlights
     if (material.is_foliage) {
         return vec3(0.0);
     }
@@ -305,6 +306,7 @@ vec3 get_specular_reflections(
     float skylight,
     bool is_water
 ) {
+    // Foliage materials should not have specular reflections
     if (material.is_foliage) {
         return vec3(0.0);
     }
@@ -390,7 +392,7 @@ vec3 get_specular_reflections(
     // Fade reflection when rough reflections are disabled
     if (material.roughness > 0.05) {
         material.f0 *= 1.0 - sqr(material.roughness);
-        material.ssr_multiplier = clamp01(2.0 - material.roughness * 5.0);
+        material.ssr_multiplier = sqr(1.0 - material.roughness);
     }
 #endif
 

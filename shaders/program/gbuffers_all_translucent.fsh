@@ -1,8 +1,8 @@
 /*
 --------------------------------------------------------------------------------
 
-  Photon Shader by SixthSurge
-  Modified by xuyin2333
+  Pholegacy by xuyin
+  Modified from Photon Shader, original author SixthSurge
 
   program/gbuffers_all_translucent:
   Handle translucent terrain, translucent entities (Iris), translucent handheld
@@ -290,7 +290,7 @@ vec4 water_absorption_approx(
         color.rgb
             + water_fog[0] * (1.0 + 6.0 * sqr(water_fog[1]))
                 * brightness_control,
-        1.0 - water_fog[1].y
+        1.0 - water_fog[1].x
     );
 }
 
@@ -642,21 +642,12 @@ void main() {
           )
         * fragment_color.a;
 
-    if (!is_water) {
-        fragment_color.rgb *= 0.1;
-    }
-
     // Specular highlight
 
 #if (defined WORLD_OVERWORLD || defined WORLD_END) && !defined NO_NORMAL
-    vec3 specular_highlight = get_specular_highlight(material, NoL, NoV, NoH, LoV, LoH)
+    fragment_color.rgb
+        += get_specular_highlight(material, NoL, NoV, NoH, LoV, LoH)
         * light_color * shadows * cloud_shadows;
-
-    if (!is_water) {
-        specular_highlight *= 3.0;
-    }
-
-    fragment_color.rgb += specular_highlight;
 #endif
 
     // Specular reflections

@@ -37,7 +37,7 @@ const float sss_density = 14.0;
 const float sss_scale = 5.0 * SSS_INTENSITY;
 const float night_vision_scale = 1.5;
 const float metal_diffuse_amount
-    = 0.5; // Scales diffuse lighting on metals, ideally this would be zero but
+    = 0.1; // Scales diffuse lighting on metals, ideally this would be zero but
            // purely specular metals don't play well with SSR
 
 float get_blocklight_falloff(float blocklight, float skylight, float ao) {
@@ -57,7 +57,7 @@ float get_blocklight_falloff(float blocklight, float skylight, float ao) {
         - 0.2 * skylight; // Reduce blocklight intensity in daylight
     falloff += min(
         2.7 * pow12(blocklight),
-        0.9
+        2.9
     ); // Strong highlight around the light source, visible even in the daylight
     falloff *= smoothstep(
         0.0,
@@ -94,8 +94,8 @@ vec3 sss_approx(
     coeff = 0.75 * clamp01(coeff);
     coeff = (1.0 - coeff) * sss_density / sss_amount;
 
-    float phase =
-        mix(isotropic_phase, henyey_greenstein_phase(-LoV, 0.7), 0.33);
+    float phase
+        = mix(isotropic_phase, henyey_greenstein_phase(-LoV, 0.7), 0.33);
 
     vec3 sss = sss_scale * phase * exp2(-coeff * sss_depth) * dampen(sss_amount)
         * pi;
@@ -134,7 +134,7 @@ vec3 get_block_lighting(
     float ao,
     float directional_lighting
 ) {
-    vec3 lighting = vec3(0f);
+    vec3 lighting = vec3(0.0f);
 
     float blocklight_falloff
         = get_blocklight_falloff(light_levels.x, light_levels.y, ao);
@@ -167,7 +167,7 @@ vec3 get_sky_lighting(
     float ambient_sss,
     float directional_lighting
 ) {
-    vec3 lighting = vec3(0f);
+    vec3 lighting = vec3(0.0f);
 
 #if defined WORLD_OVERWORLD && defined PROGRAM_DEFERRED4 && defined SH_SKYLIGHT
 #ifdef MC_GL_RENDERER_INTEL
@@ -197,7 +197,7 @@ vec3 get_sky_lighting(
         * mix(skylight, vec3(dot(skylight, luminance_weights_rec2020)), 0.5);
 #endif
 
-    lighting += skylight * get_skylight_falloff(light_levels.y);
+    lighting += skylight * get_skylight_falloff(light_levels.y) * SKYLIGHT_I;
 
     return lighting;
 }
@@ -252,7 +252,7 @@ vec3 get_diffuse_lighting(
     vec3 diffuse = vec3(
         lift(max0(NoL), 0.25 * rcp(SHADING_STRENGTH))
         * (1.0 - 0.5 * material.sss_amount)
-    );
+    ) * SHADING_STRENGTH;
 
 // Disable bounced lighting with Photonics
 #if defined PHOTONICS_DIFFUSE
@@ -263,8 +263,9 @@ vec3 get_diffuse_lighting(
 
     vec3 bounced = vec3(0.0);
     if (DO_BOUNCED_LIGHTING) {
+        float rain_boost = 1.0 + 0.25 * wetness;
         bounced = 0.033 * (1.0 - shadows) * (1.0 - 0.1 * max0(normal.y))
-            * pow1d5(ao + eps) * pow4(light_levels.y) * BOUNCED_LIGHT_I;
+            * pow1d5(ao + eps) * pow4(light_levels.y) * BOUNCED_LIGHT_I * rain_boost;
     }
 
     vec3 sss = sss_approx(
@@ -292,8 +293,8 @@ vec3 get_diffuse_lighting(
     // Add SSS and diffuse
     lighting += diffuse * shadows + bounced + sss;
 #else
-    // Additive SSS — SSS only appears on backlit/edge areas via phase function
-    lighting += diffuse * shadows + sss + bounced;
+    // Blend SSS and diffuse
+    lighting += mix(diffuse, sss, material.sss_amount) * shadows + bounced;
 #endif
 #else
     // Simple shading for when shadows are disabled
@@ -354,7 +355,7 @@ vec3 get_diffuse_lighting(
 
 #if defined PHOTONICS_DIFFUSE
     if (!is_lod) {
-        vec3 blocklight = vec3(0f);
+        vec3 blocklight = vec3(0.0f);
 
         blocklight += sample_photonics_direct(uv);
 

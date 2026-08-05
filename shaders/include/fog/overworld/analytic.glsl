@@ -20,12 +20,19 @@ vec2 air_fog_analytic_airmass(
     vec2 p1 = exp2(ray_length * ray_direction_world.y * mul + a);
     vec2 p2 = exp2(a);
 
+    // Match the diurnal density modulation of the raymarched fog so the
+    // analytic fallback stays visually consistent with the raymarched
+    // result across the day/night cycle.
+    float time_density_mod = 1.0
+        + 0.20 * (1.0 - time_noon)
+        + 0.10 * time_midnight;
+
     return clamp(
                (p1 - p2) * rcp(log(2.0) * mul * ray_direction_world.y),
                0.0,
                ray_length
            )
-        * (0.5 * OVERWORLD_FOG_INTENSITY);
+        * (0.5 * OVERWORLD_FOG_INTENSITY) * time_density_mod;
 }
 
 mat2x3 air_fog_analytic(
@@ -81,29 +88,34 @@ mat2x3 air_fog_analytic(
     float anisotropy = 1.0;
 
     scattering += 2.0 * (rayleigh_scattering + mie_scattering) * isotropic_phase
-        * ambient_color * max(skylight, eye_skylight);
+        * ambient_color;
 
     for (int i = 0; i < 4; ++i) {
         float mie_phase = 0.7 * henyey_greenstein_phase(LoV, 0.5 * anisotropy)
             + 0.3 * henyey_greenstein_phase(LoV, -0.2 * anisotropy);
 
         scattering += scatter_amount
-            * (rayleigh_scattering * rayleigh_phase(LoV)
+            * (rayleigh_scattering * isotropic_phase
                + mie_scattering * mie_phase)
-            * light_color * shadow;
+            * light_color * (1.0 - 0.9 * rainStrength) * shadow;
 
         scatter_amount *= 0.5;
         anisotropy *= 0.7;
     }
     //*/
 
+    scattering *= max(skylight, eye_skylight);
     scattering *= clamp01(1.0 - blindness - darknessFactor);
 
     // Artifically brighten fog in the early morning and evening (looks nice)
     float evening_glow
         = 0.75 * linear_step(0.05, 1.0, exp(-300.0 * sqr(sun_dir.y + 0.02)));
-    evening_glow *= mix(0.3, 1.0, shadow);
     scattering += scattering * evening_glow;
+
+    // Rain color shift: match fog color to gray-blue rain lighting
+    const vec3 fog_rain_tint = vec3(0.98, 0.98, 1.0);
+    float fog_lum = dot(scattering, vec3(0.2627, 0.6780, 0.0593));
+    scattering = mix(scattering, vec3(fog_lum) * fog_rain_tint, rainStrength * 0.75);
 
     return mat2x3(max0(scattering), max0(transmittance));
 }
